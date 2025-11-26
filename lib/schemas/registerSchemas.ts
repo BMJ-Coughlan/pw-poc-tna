@@ -18,7 +18,7 @@ import { z } from 'zod';
  */
 export const RegisterUserRequestSchema = z.object({
   name: z.string().min(1),
-  email: z.string().includes('@'),
+  email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format'),
   password: z.string().min(6),
 });
 

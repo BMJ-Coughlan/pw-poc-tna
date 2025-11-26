@@ -16,7 +16,7 @@ import { z } from 'zod';
  * Use this schema to validate login payloads before sending them to the API.
  */
 export const LoginRequestSchema = z.object({
-  email: z.string().includes('@'),
+  email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format'),
   password: z.string().min(1),
 });
 
