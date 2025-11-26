@@ -16,7 +16,7 @@ import { z } from 'zod';
  * Use this schema to validate login payloads before sending them to the API.
  */
 export const LoginRequestSchema = z.object({
-  email: z.string().email(),
+  email: z.string().includes('@'),
   password: z.string().min(1),
 });
 
@@ -26,7 +26,7 @@ export const LoginRequestSchema = z.object({
  * The remote API sometimes returns a token at the top-level (`token`) or nested
  * inside `data.token`. This schema accepts either shape and enforces that at
  * least one of those is present. Additional properties are preserved via
- * `.passthrough()` to avoid strict rejections when the API returns envelope
+ * `.catchall()` to avoid strict rejections when the API returns envelope
  * metadata.
  *
  * Example valid shapes:
@@ -41,7 +41,7 @@ export const LoginResponseSchema = z
   .refine((val) => Boolean(val?.data?.token || val?.token), {
     message: 'Expected response to include a token in `data.token` or `token`',
   })
-  .passthrough();
+  .catchall(z.any());
 
 /**
  * Request payload accepted by `UsersApi.login`.

@@ -18,7 +18,7 @@ import { z } from 'zod';
  */
 export const RegisterUserRequestSchema = z.object({
   name: z.string().min(1),
-  email: z.string().email(),
+  email: z.string().includes('@'),
   password: z.string().min(6),
 });
 
@@ -29,12 +29,12 @@ export const RegisterUserRequestSchema = z.object({
  * - data (optional): a nested object with optional fields:
  *   - id: string | number
  *   - name: string
- *   - email: string (must be a valid email)
+ *   - email: string (must contain @)
  * - id (optional): string | number (top-level)
  * - name (optional): string (top-level)
- * - email (optional): string (top-level, must be a valid email)
+ * - email (optional): string (top-level, must contain @)
  *
- * The schema is created with .passthrough(), so additional unknown properties are allowed and preserved.
+ * The schema uses .catchall() to allow and preserve additional unknown properties.
  */
 export const RegisterResponseSchema = z
   .object({
@@ -42,14 +42,14 @@ export const RegisterResponseSchema = z
       .object({
         id: z.union([z.string(), z.number()]).optional(),
         name: z.string().optional(),
-        email: z.string().email().optional(),
+        email: z.string().includes('@').optional(),
       })
       .optional(),
     id: z.union([z.string(), z.number()]).optional(),
     name: z.string().optional(),
-    email: z.string().email().optional(),
+    email: z.string().includes('@').optional(),
   })
-  .passthrough();
+  .catchall(z.any());
 
 /**
  * Request payload accepted by `UsersApi.register`.

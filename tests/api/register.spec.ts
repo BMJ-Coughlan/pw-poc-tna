@@ -1,5 +1,6 @@
 import { test, expect } from '../../lib/fixtures/testBase';
-import { ApiError } from '../../lib/apis/baseApi';
+import { UserBuilder } from '../../lib/helpers/testDataBuilders';
+import { expectApiError, expectToThrow } from '../../lib/helpers/apiAssertions';
 
 /**
  * User registration endpoint tests.
@@ -11,80 +12,41 @@ import { ApiError } from '../../lib/apis/baseApi';
 
 test.describe('User Registration', () => {
   test('should successfully register a new user', async ({ authAPI }) => {
-    const user = {
-      name: 'New User',
-      email: `newuser-${Date.now()}@example.com`,
-      password: 'securepassword123',
-    };
+    const user = UserBuilder.valid({ name: 'New User', password: 'securepassword123' });
 
     const response = await authAPI.register(user);
     expect(response).toBeDefined();
   });
 
   test('should reject registration with missing name', async ({ authAPI }) => {
-    const invalidUser = {
-      name: '',
-      email: 'test@example.com',
-      password: 'password123',
-    };
-
-    await expect(async () => {
-      await authAPI.register(invalidUser as any);
-    }).rejects.toThrow();
+    const invalidUser = UserBuilder.withInvalid('name');
+    await expectToThrow(() => authAPI.register(invalidUser as any));
   });
 
   test('should reject registration with invalid email format', async ({ authAPI }) => {
-    const invalidUser = {
-      name: 'Test User',
-      email: 'not-an-email',
-      password: 'password123',
-    };
-
-    await expect(async () => {
-      await authAPI.register(invalidUser as any);
-    }).rejects.toThrow();
+    const invalidUser = UserBuilder.withInvalid('email');
+    await expectToThrow(() => authAPI.register(invalidUser as any));
   });
 
   test('should reject registration with short password', async ({ authAPI }) => {
-    const invalidUser = {
-      name: 'Test User',
-      email: 'test@example.com',
-      password: '12345',
-    };
-
-    await expect(async () => {
-      await authAPI.register(invalidUser as any);
-    }).rejects.toThrow();
+    const invalidUser = UserBuilder.withInvalid('password');
+    await expectToThrow(() => authAPI.register(invalidUser as any));
   });
 
   test('should reject registration with missing required fields', async ({ authAPI }) => {
-    const invalidUser = {
-      name: 'Test User',
-    };
-
-    await expect(async () => {
-      await authAPI.register(invalidUser as any);
-    }).rejects.toThrow();
+    const invalidUser = UserBuilder.withMissingFields(['email', 'password']);
+    await expectToThrow(() => authAPI.register(invalidUser as any));
   });
 
   test('should return proper error status and message for duplicate email', async ({ authAPI }) => {
-    const email = `duplicate-${Date.now()}@example.com`;
-    const user = {
-      name: 'Test User',
-      email,
-      password: 'password123',
-    };
-
+    const user = UserBuilder.valid();
     await authAPI.register(user);
 
     try {
       await authAPI.register(user);
       throw new Error('Expected registration to fail for duplicate email');
     } catch (error) {
-      expect(error).toBeInstanceOf(ApiError);
-      const apiError = error as ApiError;
-      expect(apiError.status).toBeGreaterThanOrEqual(400);
-      expect(apiError.body).toBeDefined();
+      expectApiError(error);
     }
   });
 
@@ -103,11 +65,10 @@ test.describe('User Registration', () => {
   });
 
   test('should handle registration with extra unexpected fields', async ({ page }) => {
+    const user = UserBuilder.valid();
     const response = await page.request.post('/notes/api/users/register', {
       data: {
-        name: 'Test User',
-        email: `test-${Date.now()}@example.com`,
-        password: 'password123',
+        ...user,
         unexpectedField: 'should be ignored or rejected',
         anotherBadField: 12345,
       },
