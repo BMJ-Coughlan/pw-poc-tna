@@ -11,16 +11,19 @@ I designed this project as a lightweight proof-of-concept to demonstrate discipl
 
 ## Layout
 
-- `lib/apis/baseApi.ts` — `BaseApi` wraps Playwright `APIRequestContext` and provides `get/post/patch/delete` helpers. It handles:
-  - Parsing JSON responses and unwrapping a common `data` envelope.
-  - Throwing a uniform `ApiError` on HTTP failures.
-  - Optional per-call Zod validation.
+- `lib/apis/` — API clients organized by resource (`baseApi.ts`, `usersApi.ts`, etc.)
+  - `baseApi.ts` wraps Playwright `APIRequestContext` and provides `get/post/patch/delete` helpers, envelope unwrapping, error handling, and optional Zod validation.
+  - `usersApi.ts` — Resource client for Users (register, login, profile, logout).
 
-- `lib/apis/usersApi.ts` — Resource client for Users (register, login, profile, logout). It accepts either a `BaseApi` or `APIRequestContext` in the constructor.
+- `lib/schemas/` — Centralized Zod schemas for request/response validation (`authSchemas.ts`, etc.)
 
-- `lib/data/schemata/*.ts` — Centralized Zod schemata. Resource clients import schemata to validate requests and responses.
+- `lib/fixtures/` — Playwright fixtures that instantiate API clients and provide test utilities (`testBase.ts`)
 
-- `lib/fixtures/testBase.ts` — Playwright fixtures instantiate resource clients and wire them into tests (for example, an `authAPI` fixture exposing `UsersApi`).
+- `lib/pages/` — Page Object Models for UI testing (future)
+
+- `tests/api/` — API and contract tests
+
+- `tests/e2e/` — End-to-end UI tests (future)
 
 ## Patterns and Rationale
 

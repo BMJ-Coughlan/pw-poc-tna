@@ -56,7 +56,7 @@ Each demo is intentionally focused so reviewers can quickly understand the patte
 Progress — completed so far
 
 - [x] API client scaffolding: `lib/apis/baseApi.ts` and `lib/apis/usersApi.ts` (typed helpers, envelope handling).
-- [x] Zod schemata: `lib/data/schemata/authSchemas.ts` for auth requests/responses.
+- [x] Zod schemas: `lib/schemas/authSchemas.ts` for auth requests/responses.
 - [x] Playwright fixtures: `lib/fixtures/testBase.ts` provides `UsersApi` and `authenticatedPage` fixtures.
 - [x] TypeScript support and `tsconfig.json` plus `npm run typecheck` script.
 - [x] Minimal smoke test: `tests/api/auth.spec.ts` (register/login + UI navigation) — passing locally.

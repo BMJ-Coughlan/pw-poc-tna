@@ -5,7 +5,7 @@ import {
   RegisterResponseSchema,
   LoginRequestSchema,
   LoginResponseSchema,
-} from '../data/schemata/authSchemas';
+} from '../schemas/authSchemas';
 
 /**
  * UsersApi — resource client for Users-related endpoints.
