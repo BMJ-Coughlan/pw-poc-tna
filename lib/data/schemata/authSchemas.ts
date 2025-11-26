@@ -21,9 +21,9 @@ import { z } from 'zod';
  * Use this schema to validate request payloads sent to the users/register endpoint.
  */
 export const RegisterUserRequestSchema = z.object({
-    name: z.string().min(1),
-    email: z.string().email(),
-    password: z.string().min(6)
+  name: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 /**
@@ -43,16 +43,20 @@ export const RegisterUserRequestSchema = z.object({
  * @constant
  * @type {import("zod").ZodTypeAny}
  */
-export const RegisterResponseSchema = z.object({
-    data: z.object({
+export const RegisterResponseSchema = z
+  .object({
+    data: z
+      .object({
         id: z.union([z.string(), z.number()]).optional(),
         name: z.string().optional(),
-        email: z.string().email().optional()
-    }).optional(),
+        email: z.string().email().optional(),
+      })
+      .optional(),
     id: z.union([z.string(), z.number()]).optional(),
     name: z.string().optional(),
-    email: z.string().email().optional()
-}).passthrough();
+    email: z.string().email().optional(),
+  })
+  .passthrough();
 
 /**
  * Schema for a login request.
@@ -64,8 +68,8 @@ export const RegisterResponseSchema = z.object({
  * Use this schema to validate login payloads before sending them to the API.
  */
 export const LoginRequestSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(1)
+  email: z.string().email(),
+  password: z.string().min(1),
 });
 
 /**
@@ -81,12 +85,15 @@ export const LoginRequestSchema = z.object({
  * - `{ data: { token: '...' } }`
  * - `{ token: '...' }`
  */
-export const LoginResponseSchema = z.object({
+export const LoginResponseSchema = z
+  .object({
     data: z.object({ token: z.string() }).optional(),
-    token: z.string().optional()
-}).refine((val) => Boolean(val?.data?.token || val?.token), {
-    message: 'Expected response to include a token in `data.token` or `token`'
-}).passthrough();
+    token: z.string().optional(),
+  })
+  .refine((val) => Boolean(val?.data?.token || val?.token), {
+    message: 'Expected response to include a token in `data.token` or `token`',
+  })
+  .passthrough();
 
 /**
  * Request payload accepted by `UsersApi.register`.

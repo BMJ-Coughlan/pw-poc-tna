@@ -12,7 +12,6 @@ I designed this project as a lightweight proof-of-concept to demonstrate discipl
 ## Layout
 
 - `lib/apis/baseApi.ts` — `BaseApi` wraps Playwright `APIRequestContext` and provides `get/post/patch/delete` helpers. It handles:
-
   - Parsing JSON responses and unwrapping a common `data` envelope.
   - Throwing a uniform `ApiError` on HTTP failures.
   - Optional per-call Zod validation.
@@ -43,11 +42,7 @@ const token = await authAPI.login(email, password);
 - Validate a server response with a schema when posting:
 
 ```ts
-const user = await base.post(
-  "/users/register",
-  { data: userReq },
-  RegisterResponseSchema
-);
+const user = await base.post('/users/register', { data: userReq }, RegisterResponseSchema);
 ```
 
 ## Extending
