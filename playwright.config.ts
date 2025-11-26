@@ -15,10 +15,9 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 2 : 8,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter:
-    process.env.CI
-      ? [['github'], ['html', { open: 'never' }], ['list']]
-      : [['html', { open: 'always' }], ['list']],
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }], ['list']]
+    : [['html', { open: 'always' }], ['list']],
   use: {
     baseURL: 'https://practice.expandtesting.com',
 
