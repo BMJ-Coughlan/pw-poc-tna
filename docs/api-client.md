@@ -56,3 +56,65 @@ const user = await base.post('/users/register', { data: userReq }, RegisterRespo
   - Dependency injection (pass request context / base client into resource client)
   - Contract-first testing (Zod schemata validate contracts)
   - Playwright-native API usage (no separate HTTP library required)
+
+## API contract
+
+This section documents the concrete API shapes that this proof-of-concept expects and validates at runtime using Zod.
+
+- **Base path used by the clients:** `/notes/api`
+- **Envelope shape:** many endpoints return an envelope such as:
+
+```json
+{
+  "data": { /* resource payload */ },
+  "status": 200,
+  "message": "OK"
+}
+```
+
+- `BaseApi` prefers the `data` property when unwrapping responses; schemata often use `.passthrough()` to tolerate additional envelope metadata.
+- **Error semantics:** non-2xx responses cause `ApiError` to be thrown with `status` and the parsed `body`.
+
+### Key endpoints (POC)
+
+- `POST /notes/api/users/register`
+  - Request: `{ name, email, password }`
+  - Example response (envelope):
+
+```json
+{
+  "data": {
+    "id": "123",
+    "name": "Test User",
+    "email": "test@example.com"
+  },
+  "status": 201
+}
+```
+
+- `POST /notes/api/users/login`
+  - Request: `{ email, password }`
+  - Example responses supported by the client:
+
+```json
+// nested token
+{ "data": { "token": "..." } }
+
+// or top-level token
+{ "token": "..." }
+```
+
+Clients and tests should prefer extracting `data?.token` and fall back to `token` for compatibility.
+
+### Usage snippet
+
+```ts
+// In a fixture or test
+await authAPI.register({ name, email, password });
+const token = await authAPI.login(email, password);
+// Inject token into browser cookie for authenticated UI interactions
+```
+
+### Notes on side effects
+
+- The POC interacts with a live SUT and may create real users; use test-specific accounts and clean up where appropriate.
