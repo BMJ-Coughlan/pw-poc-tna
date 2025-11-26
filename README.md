@@ -19,6 +19,10 @@ npm install
 ```powershell
 npm run typecheck
 ```
+- Lint the code:
+```powershell
+npm run lint
+```
 - Run the Playwright smoke tests (Chromium):
 ```powershell
 npx playwright test tests/api --project=chromium
@@ -26,6 +30,11 @@ npx playwright test tests/api --project=chromium
 
 Design details
 - See `docs/api-client.md` for the API client architecture, schemata, examples and rationale.
+
+Code quality
+- **ESLint with TypeScript:** The project uses ESLint 9 with the flat config format (`eslint.config.mjs`) to enforce TypeScript best practices and code standards.
+- **Pre-commit hooks:** I configured `husky` and `lint-staged` to automatically run ESLint on staged TypeScript files before each commit. This ensures code quality checks happen before code enters the repository.
+- **Decision rationale:** Pre-commit linting catches issues early (before CI or review), reduces noise in PRs, and demonstrates discipline in maintaining code quality standards across a growing codebase.
 
 Notes
 - Tests use Playwright's `APIRequestContext` (no separate HTTP client required).
@@ -46,6 +55,7 @@ Progress — completed so far
 - [x] TypeScript support and `tsconfig.json` plus `npm run typecheck` script.
 - [x] Minimal smoke test: `tests/api/auth.spec.ts` (register/login + UI navigation) — passing locally.
 - [x] Documentation: `docs/api-client.md` and an updated `README.md` overview.
+- [x] Code quality tooling: ESLint with TypeScript support, husky pre-commit hooks, and lint-staged for automated linting.
 
 Remaining demos (small, focused tasks)
 
