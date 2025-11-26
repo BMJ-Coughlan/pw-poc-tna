@@ -1,0 +1,58 @@
+# API Client Architecture (Playwright Proof-of-Concept)
+
+I designed this project as a lightweight proof-of-concept to demonstrate disciplined API client design for Playwright-based contract, API, E2E, and hybrid tests. The goal is to show clear structure, strong typing, and patterns that I can explain in a portfolio.
+
+## Goals
+
+- Maintain a strong separation of concerns: a small `BaseApi` handles request/response plumbing and per-resource clients contain domain logic.
+- Validate contracts using Zod schemata for request and response shapes.
+- Integrate natively with Playwright via `APIRequestContext` for live HTTP calls inside tests.
+- Make components testable: keep classes small so they can be unit-tested with a mocked `APIRequestContext`.
+
+## Layout
+
+- `lib/apis/baseApi.ts` — `BaseApi` wraps Playwright `APIRequestContext` and provides `get/post/patch/delete` helpers. It handles:
+  - Parsing JSON responses and unwrapping a common `data` envelope.
+  - Throwing a uniform `ApiError` on HTTP failures.
+  - Optional per-call Zod validation.
+
+- `lib/apis/usersApi.ts` — Resource client for Users (register, login, profile, logout). It accepts either a `BaseApi` or `APIRequestContext` in the constructor.
+
+- `lib/data/schemata/*.ts` — Centralized Zod schemata. Resource clients import schemata to validate requests and responses.
+
+- `lib/fixtures/testBase.ts` — Playwright fixtures instantiate resource clients and wire them into tests (for example, an `authAPI` fixture exposing `UsersApi`).
+
+## Patterns and Rationale
+
+- Centralize cross-cutting behavior in `BaseApi` so resource clients remain focused and expressive.
+- Use Zod for both outgoing request validation (to catch test-side bugs) and incoming response validation (to detect contract drift).
+- Keep resource clients single-purpose — map each client to a REST resource (Users, Notes, etc.).
+- Use fixtures to provide ready-to-use instances for tests instead of constructing clients inside tests.
+
+## Examples
+
+- Register a user (in tests, via fixture):
+
+```ts
+// uses UsersApi from fixture
+await authAPI.register({ name, email, password });
+const token = await authAPI.login(email, password);
+```
+
+- Validate a server response with a schema when posting:
+
+```ts
+const user = await base.post('/users/register', { data: userReq }, RegisterResponseSchema);
+```
+
+## Extending
+
+- Add `notesApi.ts` following the `UsersApi` pattern.
+- Add unit tests for `BaseApi` and `UsersApi` using a mocked `APIRequestContext`.
+
+## Portfolio value
+
+- This layout demonstrates:
+  - Dependency injection (pass request context / base client into resource client)
+  - Contract-first testing (Zod schemata validate contracts)
+  - Playwright-native API usage (no separate HTTP library required)
