@@ -20,6 +20,9 @@
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
+    "test:visual": "playwright test tests/visual --project=chromium",
+    "test:visual:update": "playwright test tests/visual --project=chromium --update-snapshots",
+    "test:visual:ui": "playwright test tests/visual --ui",
     "report": "playwright show-report"
   },
   "keywords": [],
