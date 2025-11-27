@@ -126,9 +126,9 @@ jobs:
       - name: Run Playwright tests
         run: |
           if [ -n "${{ steps.test-strategy.outputs.tags }}" ]; then
-            npx playwright test --project=${{ matrix.browser }} --grep "${{ steps.test-strategy.outputs.tags }}" --reporter=html,junit
+            npx playwright test --project=${{ matrix.browser }} --grep "${{ steps.test-strategy.outputs.tags }}" --reporter=github,html,junit,list
           else
-            npx playwright test --project=${{ matrix.browser }} --reporter=html,junit
+            npx playwright test --project=${{ matrix.browser }} --reporter=github,html,junit,list
           fi
         env:
           CI: true
