@@ -6,13 +6,19 @@
 
 ### Triggers
 
-1. **Automatic (Push/PR to develop):**
-   - Runs on every push to `develop` branch
-   - Runs on pull requests targeting `develop` branch
+1. **Automatic (Push/PR to develop and main):**
+   - Runs on every push to `develop` or `main` branch
+   - Runs on pull requests targeting `develop` or `main` branch
+   - **Smart test selection based on branch:**
+     - **main branch** → `@regression` tests (comprehensive validation)
+     - **develop branch** → All tests (full suite)
+     - **Pull Requests** → `@smoke` tests (fast feedback)
+     - **Feature branches** → `@smoke` tests (quick validation)
 
 2. **Manual (workflow_dispatch):**
    - Can be triggered manually from GitHub Actions UI
-   - Accepts optional `tags` parameter for filtered test execution
+   - Accepts optional `tags` parameter for custom test filtering
+   - Accepts `environment` parameter to select configuration group
 
 ### Test Tags
 
@@ -46,13 +52,36 @@ Tests are organized with the following tags for flexible filtering:
 1. Go to **Actions** tab in GitHub
 2. Select **Playwright Tests** workflow
 3. Click **Run workflow** button
-4. (Optional) Enter test tags in the input field:
-   - Leave empty to run all tests (27 tests)
+4. **Select branch** to run tests against
+5. **(Optional) Configure test tags:**
+   - Leave empty to use auto-select based on branch
    - Use `@smoke` to run smoke tests only (4 tests)
-   - Use `@api` for API tests only (16 tests)
+   - Use `@api` for API tests only (15 tests)
    - Use `@e2e` for E2E tests only (11 tests)
    - Use `@regression` for regression suite
    - Combine with `.*` for AND logic: `@api.*@smoke`
+6. **(Optional) Select environment:**
+   - **auto** (default) — Automatically selects based on branch
+     - `main` → Production
+     - `develop` → Staging
+     - PRs/feature branches → Development
+   - **production** — Use production environment variables
+   - **staging** — Use staging environment variables
+   - **development** — Use development environment variables
+7. Click **"Run workflow"**
+
+### Branch-Based Test Strategy
+
+The workflow automatically selects appropriate tests based on the branch:
+
+| Branch/Event     | Test Strategy | Tags Applied  | Rationale                                  |
+| ---------------- | ------------- | ------------- | ------------------------------------------ |
+| `main`           | Regression    | `@regression` | Comprehensive validation before production |
+| `develop`        | Full Suite    | _(all tests)_ | Complete testing on integration branch     |
+| Pull Requests    | Smoke Tests   | `@smoke`      | Fast feedback for code reviews             |
+| Feature Branches | Smoke Tests   | `@smoke`      | Quick validation during development        |
+
+**Override:** Manual workflow dispatch with explicit tags overrides automatic selection.
 
 ### Features
 
@@ -99,22 +128,62 @@ Tests are organized with the following tags for flexible filtering:
 
 ### Configuration
 
-#### GitHub Variables (Optional)
+#### Environment Variable Groups (Like Azure DevOps!)
 
-Set these in **Settings → Secrets and variables → Actions → Variables**:
+The workflow uses environment variable groups similar to Azure DevOps, defined at the workflow level:
 
-```
-BASE_URL=https://practice.expandtesting.com
-COOKIE_DOMAIN=practice.expandtesting.com
-E2E_TEST_PASSWORD=TestPassword123!
-E2E_WRONG_PASSWORD=WrongPassword456!
-E2E_CORRECT_PASSWORD=CorrectPassword123!
-API_TEST_PASSWORD=password123
-E2E_INVALID_USERNAME=nonexistentuser123456
-E2E_VALIDATION_USERNAME=testuser
+**Production Environment:**
+
+```yaml
+PROD_BASE_URL: 'https://practice.expandtesting.com'
+PROD_COOKIE_DOMAIN: 'practice.expandtesting.com'
 ```
 
-**Note:** If variables are not set, workflow uses defaults matching `.env` file.
+**Staging Environment:**
+
+```yaml
+STAGING_BASE_URL: 'https://practice.expandtesting.com'
+STAGING_COOKIE_DOMAIN: 'practice.expandtesting.com'
+```
+
+**Development Environment:**
+
+```yaml
+DEV_BASE_URL: 'https://practice.expandtesting.com'
+DEV_COOKIE_DOMAIN: 'practice.expandtesting.com'
+```
+
+**Test Credentials (Shared):**
+
+```yaml
+E2E_TEST_PASSWORD: 'TestPassword123!'
+E2E_WRONG_PASSWORD: 'WrongPassword456!'
+E2E_CORRECT_PASSWORD: 'CorrectPassword123!'
+API_TEST_PASSWORD: 'password123'
+E2E_INVALID_USERNAME: 'nonexistentuser123456'
+E2E_VALIDATION_USERNAME: 'testuser'
+```
+
+**Benefits:**
+
+- ✅ Centralized configuration in workflow file
+- ✅ Easy to update URLs for different environments
+- ✅ No need to configure GitHub Secrets/Variables
+- ✅ Clear separation of environment-specific values
+- ✅ Similar pattern to Azure DevOps variable groups
+
+**To modify:** Edit the `env:` section at the top of `playwright-tests.yml`
+
+#### GitHub Variables (Optional Override)
+
+You can still override these via **Settings → Secrets and variables → Actions → Variables**:
+
+```
+BASE_URL=https://your-custom-url.com
+COOKIE_DOMAIN=your-custom-domain.com
+```
+
+These will take precedence over the workflow-level environment groups when set.
 
 #### Workflow Settings
 
