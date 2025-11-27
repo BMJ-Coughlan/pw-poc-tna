@@ -10,20 +10,24 @@ import { expectApiError, expectToThrow } from '../../lib/helpers/apiAssertions';
  * response structures.
  */
 
-test.describe('User Registration', () => {
-  test('should successfully register a new user', async ({ authAPI }) => {
+test.describe('User Registration @api', () => {
+  test('should successfully register a new user @smoke', async ({ authAPI }) => {
     const user = UserBuilder.valid({ name: 'New User', password: 'securepassword123' });
 
     const response = await authAPI.register(user);
     expect(response).toBeDefined();
   });
 
-  test('should reject registration with missing name', async ({ authAPI }) => {
+  test('should reject registration with missing name @regression @validation', async ({
+    authAPI,
+  }) => {
     const invalidUser = UserBuilder.withInvalid('name');
     await expectToThrow(() => authAPI.register(invalidUser as any));
   });
 
-  test('should reject registration with invalid email format', async ({ authAPI }) => {
+  test('should reject registration with invalid email format @regression @validation', async ({
+    authAPI,
+  }) => {
     const invalidUser = UserBuilder.withInvalid('email');
     await expectToThrow(() => authAPI.register(invalidUser as any));
   });

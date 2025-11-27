@@ -14,8 +14,8 @@ import {
  * User data is generated with workerId and timestamp to ensure parallel safety.
  */
 
-test.describe('Registration Flow - E2E', () => {
-  test('should register a new user successfully and navigate to login or app', async ({
+test.describe('Registration Flow - E2E @e2e', () => {
+  test('should register a new user successfully and navigate to login or app @smoke', async ({
     page,
   }, testInfo) => {
     const registrationPage = new RegistrationPage(page);
@@ -38,7 +38,9 @@ test.describe('Registration Flow - E2E', () => {
     expect(url.includes('/notes/app') || url.includes('/login') || hasSuccessMessage).toBeTruthy();
   });
 
-  test('should show validation error for missing username', async ({ page }) => {
+  test('should show validation error for missing username @regression @validation', async ({
+    page,
+  }) => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
@@ -47,7 +49,9 @@ test.describe('Registration Flow - E2E', () => {
     await expectValidationFailure(page, registrationPage, 'register');
   });
 
-  test('should show validation errors for empty fields', async ({ page }) => {
+  test('should show validation errors for empty fields @regression @validation', async ({
+    page,
+  }) => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
@@ -56,7 +60,9 @@ test.describe('Registration Flow - E2E', () => {
     await expectValidationFailure(page, registrationPage, 'register');
   });
 
-  test('should show validation errors for short password', async ({ page }) => {
+  test('should show validation errors for short password @regression @validation', async ({
+    page,
+  }) => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
@@ -69,7 +75,9 @@ test.describe('Registration Flow - E2E', () => {
     await expectValidationFailure(page, registrationPage, 'register');
   });
 
-  test('should show validation errors for mismatched passwords', async ({ page }) => {
+  test('should show validation errors for mismatched passwords @regression @validation', async ({
+    page,
+  }) => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
