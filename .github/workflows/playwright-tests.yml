@@ -225,69 +225,75 @@ jobs:
       - name: List artifacts
         run: ls -R all-reports/
 
-  visual:
-    name: Visual Regression (Chromium on Windows)
-    runs-on: windows-latest
-    timeout-minutes: 20
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+  # Visual Regression Job - DISABLED/QUARANTINED
+  # These tests are unreliable due to third-party Google Ads on the practice site
+  # causing pixel differences between runs. Uncomment when testing against
+  # an ad-free environment or using dedicated visual platforms (Percy.io, Chromatic).
+  #
+  # visual:
+  #   name: Visual Regression (Chromium on Windows)
+  #   runs-on: windows-latest
+  #   timeout-minutes: 20
+  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+  #
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+  #
+  #     - name: Install dependencies
+  #       run: npm ci
+  #
+  #     - name: Install Playwright Chromium
+  #       run: npx playwright install --with-deps chromium
+  #
+  #     - name: Determine environment configuration
+  #       id: env-config
+  #       shell: bash
+  #       run: |
+  #         if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+  #           echo "env_name=production" >> $GITHUB_OUTPUT
+  #         elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+  #           echo "env_name=staging" >> $GITHUB_OUTPUT
+  #         else
+  #           echo "env_name=development" >> $GITHUB_OUTPUT
+  #         fi
+  #
+  #     - name: Run visual tests (@visual)
+  #       run: |
+  #         npx playwright test --project=chromium --grep @visual
+  #       env:
+  #         CI: true
+  #         BASE_URL: ${{ vars[format('{0}_BASE_URL', steps.env-config.outputs.env_name)] }}
+  #         COOKIE_DOMAIN: ${{ vars[format('{0}_COOKIE_DOMAIN', steps.env-config.outputs.env_name)] }}
+  #         E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+  #         E2E_WRONG_PASSWORD: ${{ secrets.E2E_WRONG_PASSWORD }}
+  #         E2E_CORRECT_PASSWORD: ${{ secrets.E2E_CORRECT_PASSWORD }}
+  #         API_TEST_PASSWORD: ${{ secrets.API_TEST_PASSWORD }}
+  #         E2E_INVALID_USERNAME: ${{ vars.E2E_INVALID_USERNAME }}
+  #         E2E_VALIDATION_USERNAME: ${{ vars.E2E_VALIDATION_USERNAME }}
+  #
+  #     - name: Upload visual report
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: playwright-visual-report
+  #         path: playwright-report/
+  #         retention-days: 7
+  #
+  #     - name: Upload visual diffs
+  #       uses: actions/upload-artifact@v4
+  #       if: failure()
+  #       with:
+  #         name: visual-diffs
+  #         path: |
+  #           test-results/**/*-diff.png
+  #           test-results/**/*-actual.png
+  #           test-results/**/*-expected.png
+  #         retention-days: 7
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Determine environment configuration
-        id: env-config
-        shell: bash
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "env_name=production" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-            echo "env_name=staging" >> $GITHUB_OUTPUT
-          else
-            echo "env_name=development" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run visual tests (@visual)
-        run: |
-          npx playwright test --project=chromium --grep @visual
-        env:
-          CI: true
-          BASE_URL: ${{ vars[format('{0}_BASE_URL', steps.env-config.outputs.env_name)] }}
-          COOKIE_DOMAIN: ${{ vars[format('{0}_COOKIE_DOMAIN', steps.env-config.outputs.env_name)] }}
-          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-          E2E_WRONG_PASSWORD: ${{ secrets.E2E_WRONG_PASSWORD }}
-          E2E_CORRECT_PASSWORD: ${{ secrets.E2E_CORRECT_PASSWORD }}
-          API_TEST_PASSWORD: ${{ secrets.API_TEST_PASSWORD }}
-          E2E_INVALID_USERNAME: ${{ vars.E2E_INVALID_USERNAME }}
-          E2E_VALIDATION_USERNAME: ${{ vars.E2E_VALIDATION_USERNAME }}
-
-      - name: Upload visual report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-visual-report
-          path: playwright-report/
-          retention-days: 7
-
-      - name: Upload visual diffs
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: visual-diffs
-          path: |
-            test-results/**/*-diff.png
-            test-results/**/*-actual.png
-            test-results/**/*-expected.png
-          retention-days: 7

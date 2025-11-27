@@ -4,17 +4,25 @@ import { LoginPage, RegistrationPage } from '../../lib/pages';
 /**
  * Visual regression tests for critical application pages.
  *
- * These tests capture screenshots of key pages and compare them against
- * baseline images to detect unintended visual changes. Playwright automatically
- * handles cross-browser screenshot normalization and provides diff images
- * when visual changes are detected.
+ * ⚠️ QUARANTINED: These tests are currently quarantined due to third-party ad content
+ * on the practice testing site. Google Ads and other dynamic third-party content
+ * cause pixel differences between runs, making visual regression unreliable.
+ *
+ * These tests demonstrate visual regression testing capabilities and best practices,
+ * but are not suitable for CI/CD on sites with dynamic advertising content.
+ *
+ * For production use, visual regression requires:
+ * - Controlled test environments without third-party ads
+ * - Ad blockers or network request interception
+ * - Dedicated visual regression platforms (Percy.io, Chromatic, Applitools)
  *
  * Test tags:
  * - @visual: all visual regression tests
  * - @critical: tests for business-critical pages
+ * - @quarantine: excluded from CI due to environmental instability
  */
 
-test.describe('Critical Pages - Visual Regression @visual @critical', () => {
+test.describe('Critical Pages - Visual Regression @visual @critical @quarantine', () => {
   test('login page should match baseline', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();

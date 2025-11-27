@@ -52,6 +52,11 @@ npm run test:e2e
 # Run tests in all browsers (Chromium, Firefox, WebKit)
 npm run test:all-browsers
 
+# Run visual regression tests (quarantined - see notes below)
+npm run test:visual
+npm run test:visual:update  # Update baselines after intentional UI changes
+npm run test:visual:ui      # Debug visual tests in UI mode
+
 # Run tests in specific browser
 npm run test:chromium
 npm run test:firefox
@@ -70,6 +75,7 @@ npm run report
 
 - **API Testing:** See `docs/api-client.md` for the API client architecture, schemas, examples, and rationale.
 - **E2E Testing:** See `docs/e2e-testing.md` for page object patterns, hybrid testing approach, and key discoveries.
+- **Visual Regression (Quarantined):** See `docs/visual-regression.md` for visual testing implementation. These tests are quarantined (`@quarantine`) because the practice site contains third-party Google Ads that cause pixel differences between runs, making visual regression unreliable in CI. The tests demonstrate visual regression capabilities and best practices, but would require a controlled environment (no ads) or dedicated visual platforms (Percy.io, Chromatic) for production use.
 
 ## Code Quality
 
@@ -106,6 +112,8 @@ npm run report
 - [x] E2E test helpers: `lib/helpers/e2eHelpers.ts` with utilities for email/username generation, validation assertions, and timing.
 - [x] Environment configuration: `.env` file centralizes test URLs, passwords, and test data for maintainability.
 - [x] E2E documentation: `docs/e2e-testing.md` with patterns, design decisions, and debugging discoveries.
+- [x] CI/CD pipeline: GitHub Actions workflow with intelligent test selection, cross-browser matrix, secure credential management, and interactive test reporting.
+- [x] Visual regression tests (quarantined): 8 visual tests demonstrating screenshot comparison, dynamic content masking, and cross-viewport testing. Quarantined due to third-party ads on practice site causing flaky comparisons.
 
 **Planned next:**
 

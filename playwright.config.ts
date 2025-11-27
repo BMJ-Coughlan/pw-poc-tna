@@ -19,8 +19,8 @@ export default defineConfig({
   /* Default screenshot comparison behavior */
   expect: {
     toHaveScreenshot: {
-      maxDiffPixels: 100,
-      threshold: 0.2,
+      maxDiffPixels: 800,
+      threshold: 0.25,
       animations: 'disabled',
     },
   },

@@ -1,5 +1,53 @@
 # Visual Regression Testing
 
+⚠️ **QUARANTINED**: These tests are currently excluded from CI/CD pipelines.
+
+## Why Quarantined?
+
+The practice testing site (`practice.expandtesting.com`) contains **third-party Google Ads** and dynamic advertising content. This creates several issues for visual regression testing:
+
+1. **Pixel differences**: Ads load different images/content on each run
+2. **Layout shifts**: Ad containers resize based on loaded content
+3. **Timing variations**: Ads load asynchronously, causing race conditions
+4. **Non-deterministic behavior**: Different ads appear based on targeting, location, time
+
+These factors make pixel-perfect screenshot comparison inherently unreliable, causing false failures and making the tests unsuitable for CI/CD automation.
+
+## Production Requirements
+
+For visual regression to work reliably in production, you need:
+
+**Option 1: Controlled Environment**
+
+- Test environment without third-party ads
+- Static content only (no dynamic advertising)
+- Consistent layout and content on every run
+
+**Option 2: Network Interception**
+
+- Block ad domains via Playwright's `route()` API
+- Mock ad responses with static placeholders
+- Requires maintenance as ad networks change
+
+**Option 3: Dedicated Visual Platforms**
+
+- Percy.io, Chromatic, or Applitools
+- Advanced diffing algorithms that ignore dynamic regions
+- Manual baseline approval workflows
+- Intelligent threshold tuning
+
+## What This Demonstrates
+
+Despite being quarantined, these tests showcase:
+
+- Screenshot capture and comparison techniques
+- Dynamic content masking strategies
+- Cross-viewport testing (mobile, tablet, desktop)
+- State-based visual testing (empty, error, authenticated)
+- Component vs full-page screenshot approaches
+- Playwright's `toHaveScreenshot()` API usage
+- Professional test organization and documentation
+
 ## Overview
 
 Visual regression tests capture screenshots of key pages and UI components, comparing them against baseline images to detect unintended visual changes. This catches CSS bugs, layout shifts, and design regressions that functional tests might miss.
@@ -136,16 +184,24 @@ Tests cover multiple viewports:
 
 ### Tagging Strategy
 
-Visual tests use `@visual` tag for selective execution.
+Visual tests use `@visual @quarantine` tags. The `@quarantine` tag excludes them from CI due to third-party ad interference.
 
-### CI Job
+### CI Job (Disabled)
 
-A dedicated "Visual Regression (Chromium on Windows)" job runs:
+⚠️ **The visual regression CI job is disabled** because these tests are unreliable on the practice site due to third-party ads.
+
+The workflow includes a commented-out job that would run:
 
 - On `main` and on manual dispatch
 - On `windows-latest` to match committed `*-win32.png` baselines
 - With Chromium only: `npx playwright test --project=chromium --grep @visual`
 - Uploads `*-diff.png`, `*-actual.png`, `*-expected.png` as artifacts on failure
+
+**To enable** (when running against ad-free environment):
+
+1. Remove the `@quarantine` tag from `tests/visual/critical-pages.spec.ts`
+2. Uncomment the `visual` job in `.github/workflows/playwright-tests.yml`
+3. Update the `if:` condition to match your branching strategy
 
 ### Local Scripts
 
