@@ -1,13 +1,13 @@
 # API Client Architecture
 
-This project demonstrates disciplined API testing with Playwright: contract validation using Zod, typed API clients, and test helpers that reduce duplication.
+Disciplined API testing with Playwright: contract validation via Zod, typed clients, and helpers that keep tests small and readable.
 
-## Structure
+## Structure & Rationale
 
-- `lib/apis/baseApi.ts` — Wraps Playwright `APIRequestContext` with helpers for get/post/patch/delete, envelope unwrapping, and Zod validation
-- `lib/apis/usersApi.ts` — Resource client for Users (register, login, profile, logout)
+- `lib/apis/baseApi.ts` — Wraps `APIRequestContext`; normalizes envelopes; optional Zod validation. Keeps cross‑cutting behavior out of resource clients.
+- `lib/apis/usersApi.ts` — Focused resource client (register/login/profile/logout). Thin by design.
 - `lib/schemas/` — Zod schemas for request/response validation
-- `lib/fixtures/testBase.ts` — Playwright fixtures that provide API clients
+- `lib/fixtures/testBase.ts` — Fixtures inject ready‑to‑use clients. Tests don’t construct clients inline.
 - `lib/helpers/testDataBuilders.ts` — Factory methods for test data (`UserBuilder.valid()`)
 - `lib/helpers/apiAssertions.ts` — Reusable assertion helpers for API errors
 - `tests/api/` — API tests organized by resource
@@ -31,7 +31,9 @@ try {
 }
 ```
 
-Helpers reduce test file length by ~40% while keeping tests readable.
+Helpers reduce boilerplate while keeping intent explicit.
+
+Design choice: Zod at the boundary gives fast feedback on contract drift without writing verbose assertions in every test.
 
 ## Examples
 
@@ -85,7 +87,12 @@ Base path: `/notes/api`
 **Key endpoints:**
 
 - `POST /notes/api/users/register` — `{ name, email, password }`
-- `POST /notes/api/users/login` — `{ email, password }` → `{ token }`
+- `POST /notes/api/users/login` — `{ email, password }` → `{ token }` (prefers `data.token`, falls back to top‑level `token`)
+
+Notes:
+
+- Non‑2xx responses throw `ApiError(status, body)` to keep error handling consistent.
+- Tests use fixtures to avoid ad‑hoc client construction and wiring.
 
 ### Notes on side effects
 

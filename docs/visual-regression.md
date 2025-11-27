@@ -4,20 +4,21 @@
 
 ## Why Quarantined?
 
-The practice site has Google Ads that change on every run, causing pixel differences and making visual regression unreliable. Ads load different content, resize containers, and shift layouts unpredictably.
+Ads introduce non-determinism (content, size, timing). Visual diffs become noise.
 
-**For production use, you'd need:**
+SME view:
 
-- Controlled environment without ads
-- Network interception to block ad domains
-- Dedicated visual platforms (Percy.io, Chromatic, Applitools)
+- Control the environment (no third‑party ads) or intercept ad domains.
+- If not possible, use a visual platform (Percy/Chromatic/Applitools) with region ignores.
 
-**What this demonstrates:**
+What this work shows:
 
-- Screenshot capture and comparison
-- Dynamic content masking
-- Cross-viewport testing (mobile, tablet, desktop)
-- Playwright's `toHaveScreenshot()` API
+- Screenshot comparison with stable baselines
+- Dynamic content masking for deterministic captures
+- Cross‑viewport coverage (mobile/tablet/desktop)
+- Practical `toHaveScreenshot()` usage
+
+Why this approach: keep the technique visible in the portfolio, but quarantine it where the SUT isn’t deterministic.
 
 ## Running Locally
 
@@ -37,9 +38,12 @@ npm run test:visual:ui        # Debug in UI mode
 
 ## How It Works
 
-First run generates baseline screenshots in `tests/visual/*-snapshots/`. Subsequent runs compare pixel-by-pixel and fail if differences exceed threshold (currently 800px or 25%).
+Baseline images live in `tests/visual/*-snapshots/`.
+Subsequent runs compare against baselines and fail if differences exceed thresholds (800px or 25%).
 
-Failed tests generate diff images viewable in the HTML report: `npm run report`
+Failures include baseline/actual/diff in the HTML report (`npm run report`).
+
+Tip: review diffs before accepting baseline changes; only update when the UI change is intentional.
 
 ## Key Techniques
 
@@ -51,13 +55,13 @@ await page.addStyleTag({
 });
 ```
 
-**Wait for stability:**
+**Wait for stability (prefer element readiness over pure network idle):**
 
 ```typescript
 await page.waitForLoadState('networkidle');
 ```
 
-**Configure thresholds:**
+**Configure thresholds (trade‑off: sensitivity vs flake):**
 
 ```typescript
 // playwright.config.ts
@@ -77,3 +81,4 @@ The visual job is commented out in `.github/workflows/playwright-tests.yml`. To 
 1. Remove `@quarantine` tag from tests
 2. Uncomment the `visual` job
 3. Test against an ad-free environment
+4. Consider uploading `*-diff.png` artifacts on failure for review

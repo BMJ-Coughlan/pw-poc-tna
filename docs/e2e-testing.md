@@ -1,6 +1,6 @@
 # E2E Testing with Page Objects
 
-This project uses the **Page Object Pattern** for maintainable E2E tests. Page objects encapsulate UI structure and interactions, keeping tests focused on behavior.
+We use the **Page Object Pattern** for maintainable E2E tests. Page objects encapsulate UI structure and interactions so tests stay focused on behavior. Centralizing locators and semantics reduces churn.
 
 ## Page Objects
 
@@ -25,12 +25,9 @@ This project uses the **Page Object Pattern** for maintainable E2E tests. Page o
 
 - Methods: `logout()`, `isAuthenticated()`, `waitForApp()`
 
-## Test Coverage
+## Coverage
 
-**11 tests, 100% passing:**
-
-- Registration: 5 tests (success, validation errors)
-- Login: 6 tests (success, errors, navigation)
+11 tests — registration (5) and login (6): success + validation/error cases. Enough to demonstrate discipline without trying to be exhaustive.
 
 ## Hybrid Testing
 
@@ -56,8 +53,7 @@ test('login', async ({ page, authAPI }, testInfo) => {
 });
 ```
 
-**Benefits:** Faster, more reliable, focused on UI behavior.
-**Trade-off:** Not pure E2E, but API tests already cover registration.
+Benefits: fast, deterministic setup; UI asserts stay focused. Trade‑off: not pure E2E — acceptable given API coverage and portfolio goals.
 
 ## Test Data
 
@@ -96,11 +92,12 @@ this.emailInput = page.locator('input#email, input[name="email"], input[type="em
 this.errorMessage = page.locator('[role="alert"], .error, .alert').first();
 ```
 
-This makes tests resilient to UI changes.
+Resilient selectors reduce flake from minor UI changes. Prefer semantic/ARIA attributes when available.
 
-## Key Learnings
+## Notes
 
-1. **Don't assume paths** — `/login` and `/notes/app/login` are different systems
-2. **Check field names** — Login uses `email`, not `username`
-3. **Flexible assertions** — `hasError || stillOnPage` is more resilient than exact error text
-4. **Hybrid approach works** — API setup + UI validation is fast and focused
+- Paths matter: `/login` vs `/notes/app/login` are distinct systems.
+- Field names matter: login uses `email`, not `username`.
+- Assertions should be resilient: `hasError || stillOnPage` beats exact error text.
+- Hybrid approach keeps E2E fast and focused.
+- Keep tests small; rely on API tests for contract precision.
