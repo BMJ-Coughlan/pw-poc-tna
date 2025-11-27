@@ -32,6 +32,11 @@ on:
           - development
         default: 'auto'
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
     name: Run Playwright Tests
@@ -147,9 +152,10 @@ jobs:
         if: always()
         with:
           files: |
-            test-results/junit.xml
+            results.xml
           check_name: 'Test Results (${{ matrix.browser }})'
           comment_mode: off
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
