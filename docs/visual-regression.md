@@ -1,0 +1,222 @@
+# Visual Regression Testing
+
+## Overview
+
+Visual regression tests capture screenshots of key pages and UI components, comparing them against baseline images to detect unintended visual changes. This catches CSS bugs, layout shifts, and design regressions that functional tests might miss.
+
+## Test Coverage
+
+**Critical Pages:**
+
+- Login page (desktop + mobile)
+- Registration page
+- Authenticated dashboard (desktop + tablet)
+- Error states (validation errors)
+- Component-level (form elements)
+
+## Running Visual Tests
+
+### Run all visual tests
+
+```powershell
+npx playwright test tests/visual --project=chromium
+```
+
+### Run specific visual test
+
+```powershell
+npx playwright test tests/visual/critical-pages.spec.ts
+```
+
+### Update baselines (after intentional UI changes)
+
+```powershell
+npx playwright test tests/visual --update-snapshots
+```
+
+### Run in UI mode for debugging
+
+```powershell
+npx playwright test tests/visual --ui
+```
+
+## How It Works
+
+### First Run - Generate Baselines
+
+When you first run visual tests, Playwright creates baseline screenshots in:
+
+```
+tests/visual/critical-pages.spec.ts-snapshots/
+├── login-page-chromium-win32.png
+├── registration-page-chromium-win32.png
+└── dashboard-authenticated-chromium-win32.png
+```
+
+Screenshots are platform and browser-specific (e.g., `chromium-win32`, `firefox-darwin`, `webkit-linux`).
+
+### Subsequent Runs - Compare
+
+On future runs, Playwright:
+
+1. Captures new screenshots
+2. Compares pixel-by-pixel with baselines
+3. Generates diff images if changes detected
+4. Fails the test if differences exceed threshold
+
+### When Tests Fail
+
+Failed visual tests generate three images:
+
+- **Baseline** (`*-expected.png`) - Original baseline
+- **Actual** (`*-actual.png`) - Current screenshot
+- **Diff** (`*-diff.png`) - Highlighted differences
+
+View these in the HTML report:
+
+```powershell
+npx playwright show-report
+```
+
+## Configuration
+
+### Screenshot Options
+
+Tests use these options for consistency:
+
+```typescript
+await expect(page).toHaveScreenshot('name.png', {
+  fullPage: true, // Capture entire page (not just viewport)
+  animations: 'disabled', // Disable CSS animations for stability
+});
+```
+
+### Hiding Dynamic Content
+
+Dynamic elements (timestamps, user IDs) are hidden to prevent false failures:
+
+```typescript
+await page.addStyleTag({
+  content: `
+    .user-email,
+    .last-login {
+      visibility: hidden !important;
+    }
+  `,
+});
+```
+
+### Viewport Testing
+
+Tests cover multiple viewports:
+
+- **Desktop**: Default (1280x720)
+- **Mobile**: 375x667 (iPhone SE)
+- **Tablet**: 768x1024 (iPad)
+
+## Best Practices
+
+### ✅ Do
+
+- **Wait for stability** - Use `waitForLoadState('networkidle')` before screenshots
+- **Hide dynamic content** - Timestamps, session IDs, user emails
+- **Disable animations** - Prevents timing-based flakiness
+- **Use descriptive names** - `login-page-error.png` not `screenshot1.png`
+- **Test critical paths** - Login, registration, checkout, dashboard
+- **Update baselines intentionally** - Review diffs before accepting changes
+
+### ❌ Don't
+
+- Screenshot pages with live data feeds (stock tickers, real-time updates)
+- Include user-generated content without masking
+- Run visual tests on every PR (they're slow) - use CI tags
+- Commit baseline images to git if tests run on multiple OS/browsers
+
+## CI/CD Integration
+
+### Tagging Strategy
+
+Visual tests use `@visual` tag for selective execution:
+
+```yaml
+# Run only on main branch (comprehensive validation)
+if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+npx playwright test --grep @visual
+fi
+```
+
+### Artifact Storage
+
+CI should upload failed screenshots as artifacts:
+
+```yaml
+- name: Upload visual test failures
+  uses: actions/upload-artifact@v4
+  if: failure()
+  with:
+    name: visual-test-failures
+    path: test-results/**/*-diff.png
+```
+
+### Baseline Management
+
+**Option 1: Commit baselines (simple)**
+
+- Store baselines in git
+- CI uses committed baselines
+- Update with `--update-snapshots` locally
+
+**Option 2: Cloud storage (scalable)**
+
+- Store baselines in S3/Azure Blob
+- CI downloads baselines before running
+- Update baselines via separate job
+
+## Troubleshooting
+
+### "Screenshot comparison failed"
+
+- Review diff image in HTML report
+- If change is intentional: `npx playwright test --update-snapshots`
+- If unintentional: fix CSS/layout bug
+
+### "Baseline not found"
+
+- Run tests locally first to generate baselines
+- Commit baseline images if using git storage
+- Check platform-specific naming (win32 vs darwin vs linux)
+
+### Flaky visual tests
+
+- Add longer `waitForLoadState` timeout
+- Hide more dynamic elements
+- Use `maxDiffPixels` option for minor acceptable differences:
+  ```typescript
+  await expect(page).toHaveScreenshot('name.png', {
+    maxDiffPixels: 100, // Allow up to 100 pixels difference
+  });
+  ```
+
+### Cross-browser differences
+
+- Fonts render differently on WebKit vs Chromium
+- Use web-safe fonts for critical visual tests
+- Or run visual tests on single browser (typically Chromium)
+
+## Portfolio Value
+
+This demonstrates:
+
+- **Comprehensive testing** - Beyond functional to visual quality
+- **Test stability** - Handling dynamic content, animations
+- **Cross-device testing** - Mobile, tablet, desktop viewports
+- **CI/CD integration** - Selective execution, artifact management
+- **Professional approach** - Documentation, best practices, troubleshooting guide
+
+## Future Enhancements
+
+- [ ] Percy.io integration for visual diff UI
+- [ ] Automatic baseline updates via PR bot
+- [ ] Component library visual tests (Storybook integration)
+- [ ] Accessibility contrast checking in screenshots
+- [ ] Performance: only screenshot changed pages
