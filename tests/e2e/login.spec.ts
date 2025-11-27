@@ -1,22 +1,27 @@
 import { test, expect } from '../../lib/fixtures/testBase';
 import { LoginPage } from '../../lib/pages';
+import {
+  generateUniqueEmail,
+  expectValidationFailure,
+  waitForAuthResponse,
+} from '../../lib/helpers/e2eHelpers';
 
 /**
  * E2E tests for the user login flow.
  *
  * These tests interact with the login UI to verify authentication,
  * validation, error handling, and navigation. Users are pre-registered via
- * UI to ensure known credentials exist (username/password), then login flow is tested.
+ * API to ensure known credentials exist, then login flow is tested.
  */
 
 test.describe('Login Flow - E2E', () => {
   test('should login successfully with valid credentials', async ({ page, authAPI }, testInfo) => {
     // Pre-register user via API (API creates accounts that work with UI login)
-    const uniqueEmail = `e2e_login_w${testInfo.workerIndex}_${Date.now()}@example.com`;
+    const uniqueEmail = generateUniqueEmail('login', testInfo);
     const userData = {
       name: 'E2E Login User',
       email: uniqueEmail,
-      password: 'TestPassword123!',
+      password: process.env.E2E_TEST_PASSWORD!,
     };
     await authAPI.register(userData);
 
@@ -24,7 +29,7 @@ test.describe('Login Flow - E2E', () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.login(userData.email, userData.password);
-    await page.waitForTimeout(2000);
+    await waitForAuthResponse(page);
 
     // Verify login was successful - either navigated away or no error shown
     const url = page.url();
@@ -34,45 +39,35 @@ test.describe('Login Flow - E2E', () => {
     expect(url.includes('/notes/app') || !hasError).toBeTruthy();
   });
 
-  test('should show error for non-existent user', async ({ page }) => {
+  test('should show error for invalid credentials', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
-    await loginPage.login('nonexistentuser123456', 'password123');
+    await loginPage.login(
+      process.env.E2E_INVALID_USERNAME || 'nonexistentuser123456',
+      process.env.E2E_TEST_PASSWORD || 'password123'
+    );
+    await waitForAuthResponse(page);
 
-    // Wait a moment for error to appear
-    await page.waitForTimeout(1000);
-
-    // Should show error OR stay on login page (indicates failure)
-    const hasError = await loginPage.hasErrorMessage();
-    const stillOnLogin = page.url().includes('/login');
-
-    // Either shows error or didn't navigate away from login
-    expect(hasError || stillOnLogin).toBeTruthy();
+    await expectValidationFailure(page, loginPage, '/login');
   });
 
   test('should show error for incorrect password', async ({ page, authAPI }, testInfo) => {
     // Pre-register user via API
-    const uniqueEmail = `e2e_wrongpwd_w${testInfo.workerIndex}_${Date.now()}@example.com`;
+    const uniqueEmail = generateUniqueEmail('wrongpwd', testInfo);
     await authAPI.register({
       name: 'Test User',
       email: uniqueEmail,
-      password: 'CorrectPassword123!',
+      password: process.env.E2E_CORRECT_PASSWORD!,
     });
 
     // Attempt login with wrong password
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(uniqueEmail, 'WrongPassword456!');
+    await loginPage.login(uniqueEmail, process.env.E2E_WRONG_PASSWORD!);
+    await waitForAuthResponse(page);
 
-    // Wait for error
-    await page.waitForTimeout(1000);
-
-    // Should show error OR stay on login page
-    const hasError = await loginPage.hasErrorMessage();
-    const stillOnLogin = page.url().includes('/login');
-
-    expect(hasError || stillOnLogin).toBeTruthy();
+    await expectValidationFailure(page, loginPage, '/login');
   });
 
   test('should show validation error for empty username', async ({ page }) => {
@@ -81,22 +76,16 @@ test.describe('Login Flow - E2E', () => {
 
     await loginPage.login('', 'password123');
 
-    const hasError = await loginPage.hasErrorMessage();
-    const stillOnLogin = page.url().includes('login');
-
-    expect(hasError || stillOnLogin).toBeTruthy();
+    await expectValidationFailure(page, loginPage, 'login');
   });
 
-  test('should show validation error for empty password', async ({ page }) => {
+  test('should show validation errors for missing username', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
-    await loginPage.login('testuser', '');
+    await loginPage.login(process.env.E2E_VALIDATION_USERNAME || 'testuser', '');
 
-    const hasError = await loginPage.hasErrorMessage();
-    const stillOnLogin = page.url().includes('login');
-
-    expect(hasError || stillOnLogin).toBeTruthy();
+    await expectValidationFailure(page, loginPage, 'login');
   });
 
   test('should navigate to registration page when clicking register link', async ({ page }) => {

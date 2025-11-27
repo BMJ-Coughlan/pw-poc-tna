@@ -1,5 +1,10 @@
 import { test, expect } from '../../lib/fixtures/testBase';
 import { RegistrationPage } from '../../lib/pages';
+import {
+  generateUniqueUsername,
+  expectValidationFailure,
+  waitForRegistrationComplete,
+} from '../../lib/helpers/e2eHelpers';
 
 /**
  * E2E tests for the user registration flow.
@@ -16,14 +21,12 @@ test.describe('Registration Flow - E2E', () => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
-    const uniqueUsername = `e2e_user_w${testInfo.workerIndex}_${Date.now()}`;
-    const password = 'TestPassword123!';
-
+    const uniqueUsername = generateUniqueUsername(testInfo);
+    const password = process.env.E2E_TEST_PASSWORD!;
     await registrationPage.register(uniqueUsername, password, password);
 
     // After successful registration, check for success message or redirect
-    // The app might show a success message and stay on the page, or redirect
-    await page.waitForTimeout(2000); // Give time for success message or redirect
+    await waitForRegistrationComplete(page);
 
     const url = page.url();
     const hasSuccessMessage = await page
@@ -41,46 +44,41 @@ test.describe('Registration Flow - E2E', () => {
 
     await registrationPage.register('', 'password123', 'password123');
 
-    // Should show error or prevent submission
-    const hasError = await registrationPage.hasErrorMessage();
-    const stillOnRegister = page.url().includes('register');
-
-    expect(hasError || stillOnRegister).toBeTruthy();
+    await expectValidationFailure(page, registrationPage, 'register');
   });
 
-  test('should show validation error for missing password', async ({ page }) => {
+  test('should show validation errors for empty fields', async ({ page }) => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
-    await registrationPage.register('testuser', '', '');
+    await registrationPage.register(process.env.E2E_VALIDATION_USERNAME || 'testuser', '', '');
 
-    const hasError = await registrationPage.hasErrorMessage();
-    const stillOnRegister = page.url().includes('register');
-
-    expect(hasError || stillOnRegister).toBeTruthy();
+    await expectValidationFailure(page, registrationPage, 'register');
   });
 
-  test('should show validation error for short password', async ({ page }) => {
+  test('should show validation errors for short password', async ({ page }) => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
-    await registrationPage.register('testuser', '123', '123');
+    await registrationPage.register(
+      process.env.E2E_VALIDATION_USERNAME || 'testuser',
+      '123',
+      '123'
+    );
 
-    const hasError = await registrationPage.hasErrorMessage();
-    const stillOnRegister = page.url().includes('register');
-
-    expect(hasError || stillOnRegister).toBeTruthy();
+    await expectValidationFailure(page, registrationPage, 'register');
   });
 
-  test('should show validation error for password mismatch', async ({ page }) => {
+  test('should show validation errors for mismatched passwords', async ({ page }) => {
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
-    await registrationPage.register('testuser', 'password123', 'different456');
+    await registrationPage.register(
+      process.env.E2E_VALIDATION_USERNAME || 'testuser',
+      'password123',
+      'different456'
+    );
 
-    const hasError = await registrationPage.hasErrorMessage();
-    const stillOnRegister = page.url().includes('register');
-
-    expect(hasError || stillOnRegister).toBeTruthy();
+    await expectValidationFailure(page, registrationPage, 'register');
   });
 });
