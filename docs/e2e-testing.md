@@ -101,8 +101,7 @@ Tests are organized by **user flow/feature**:
 ```
 tests/e2e/
 ├── registration.spec.ts  — Registration form UI tests (5 tests)
-├── login.spec.ts         — Login form UI tests (6 tests)
-└── session.spec.ts       — Navigation and access control (3 tests)
+└── login.spec.ts         — Login form UI tests (6 tests)
 ```
 
 ### Test Coverage
@@ -124,13 +123,7 @@ tests/e2e/
 - ✅ Validation error for empty password
 - ✅ Navigation to registration page
 
-**Session Tests (3):**
-
-- ✅ Navigation to login page
-- ✅ Navigation to registration page
-- ✅ Navigation from login to registration
-
-**Total: 14 tests, 100% passing**
+**Total: 11 tests, 100% passing**
 
 ## Hybrid Testing Approach
 

@@ -81,7 +81,7 @@ npm run report
 - [x] Documentation: `docs/api-client.md` and an updated `README.md` overview.
 - [x] Code quality tooling: ESLint with TypeScript support, husky pre-commit hooks, and lint-staged for automated linting.
 - [x] Page Object Pattern: `lib/pages/` with `BasePage`, `LoginPage`, `RegistrationPage`, and `NotesAppPage`.
-- [x] E2E authentication tests: 14 tests covering registration, login, and navigation flows (100% passing).
+- [x] E2E authentication tests: 11 tests covering registration and login flows (100% passing).
 - [x] Hybrid testing approach: API setup combined with UI testing for speed and focus.
 - [x] E2E documentation: `docs/e2e-testing.md` with patterns, design decisions, and debugging discoveries.
 
