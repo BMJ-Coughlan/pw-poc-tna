@@ -1,5 +1,7 @@
 # Playwright POC — Test Automation Portfolio
 
+[![Playwright Tests](https://github.com/BMJ-Coughlan/pw-poc-tna/actions/workflows/playwright-tests.yml/badge.svg?branch=develop)](https://github.com/BMJ-Coughlan/pw-poc-tna/actions/workflows/playwright-tests.yml)
+
 ## Purpose
 
 I built this project to demonstrate disciplined test automation using Playwright: API testing, contract validation with Zod, end-to-end UI testing, and hybrid flows where the API prepares test state and API responses inform UI assertions.
