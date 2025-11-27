@@ -4,6 +4,23 @@
 
 I built this project to demonstrate disciplined test automation using Playwright: API testing, contract validation with Zod, end-to-end UI testing, and hybrid flows where the API prepares test state and API responses inform UI assertions.
 
+## Environment Configuration
+
+The project uses a `.env` file for test configuration. This file is included in version control for transparency (POC/portfolio context).
+
+**Configuration variables:**
+
+- `BASE_URL` — Test application URL (default: `https://practice.expandtesting.com`)
+- `COOKIE_DOMAIN` — Cookie domain for authentication
+- `E2E_TEST_PASSWORD` — Standard password for E2E tests
+- `E2E_WRONG_PASSWORD` — Invalid password for negative tests
+- `E2E_CORRECT_PASSWORD` — Valid password for credential tests
+- `API_TEST_PASSWORD` — Password for API-generated test users
+- `E2E_INVALID_USERNAME` — Invalid username for negative tests
+- `E2E_VALIDATION_USERNAME` — Username for validation tests
+
+**Rationale:** Environment variables centralize configuration, make tests portable across environments, and eliminate magic strings from test code.
+
 ## Quick Start
 
 Install dependencies:
@@ -64,9 +81,10 @@ npm run report
 - Tests use Playwright's `APIRequestContext` (no separate HTTP client required).
 - `BaseApi` unwraps common response envelopes and supports per-call Zod validation.
 - Resource clients like `UsersApi` are accessed via fixtures rather than raw HTTP calls in tests.
-- Test helpers reduce duplication: `UserBuilder` for test data generation, assertion helpers for common error validation patterns.
+- Test helpers reduce duplication: `UserBuilder` for test data generation, assertion helpers for common error validation patterns, E2E helpers for unique email/username generation.
 - E2E tests use the Page Object Pattern to encapsulate UI structure and interactions.
 - Hybrid testing approach: API registration for setup, UI testing for behavior validation.
+- Environment variables centralize test configuration (URLs, passwords, test data) for maintainability.
 
 ## Progress
 
@@ -83,6 +101,8 @@ npm run report
 - [x] Page Object Pattern: `lib/pages/` with `BasePage`, `LoginPage`, `RegistrationPage`, and `NotesAppPage`.
 - [x] E2E authentication tests: 11 tests covering registration and login flows (100% passing).
 - [x] Hybrid testing approach: API setup combined with UI testing for speed and focus.
+- [x] E2E test helpers: `lib/helpers/e2eHelpers.ts` with utilities for email/username generation, validation assertions, and timing.
+- [x] Environment configuration: `.env` file centralizes test URLs, passwords, and test data for maintainability.
 - [x] E2E documentation: `docs/e2e-testing.md` with patterns, design decisions, and debugging discoveries.
 
 **Planned next:**

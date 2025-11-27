@@ -106,6 +106,8 @@ tests/e2e/
 
 ### Test Coverage
 
+**Total: 11 tests, 100% passing**
+
 **Registration Tests (5):**
 
 - ✅ Successful registration with valid data
@@ -195,13 +197,113 @@ const uniqueEmail = `e2e_login_w${testInfo.workerIndex}_${Date.now()}@example.co
 
 ### Password Strategy
 
-Tests use a consistent, valid password: `TestPassword123!`
+Tests use environment-configured passwords from `.env`:
+
+- `E2E_TEST_PASSWORD` — Standard valid password (`TestPassword123!`)
+- `E2E_WRONG_PASSWORD` — Invalid password for negative tests (`WrongPassword456!`)
+- `E2E_CORRECT_PASSWORD` — Valid password for credential mismatch tests (`CorrectPassword123!`)
 
 **Why?**
 
+- **Centralized configuration** — All passwords defined in one place
+- **Environment portability** — Easy to change for different test environments
+- **No magic strings** — Tests use `process.env.E2E_TEST_PASSWORD` instead of hardcoded values
 - **Not testing password rules** — API tests already cover password validation
-- **Simplifies debugging** — Seeing this password immediately identifies test data
-- **Meets requirements** — Long enough, has special characters
+
+### Test Helpers
+
+E2E tests use helper functions from `lib/helpers/e2eHelpers.ts` to reduce duplication:
+
+**Data Generation:**
+
+```typescript
+generateUniqueEmail(prefix, testInfo); // Worker-safe unique emails
+generateUniqueUsername(testInfo); // Worker-safe unique usernames
+```
+
+**Timing Helpers:**
+
+```typescript
+waitForAuthResponse(page); // Standard 1s wait for login/auth
+waitForRegistrationComplete(page); // Extended 2s wait for registration redirect
+```
+
+**Assertion Helpers:**
+
+```typescript
+expectValidationFailure(page, pageObject, expectedUrl);
+// Asserts error shown OR page didn't navigate (common validation pattern)
+```
+
+**Benefits:**
+
+- **DRY tests** — Reduced test files by ~30% through helper extraction
+- **Consistent patterns** — Same data generation across all tests
+- **Semantic naming** — `waitForAuthResponse()` clearer than `page.waitForTimeout(1000)`
+- **Single source of truth** — Change timing strategy in one place
+
+## Environment Configuration
+
+Tests use environment variables from `.env` for configuration:
+
+**Application Configuration:**
+
+```dotenv
+BASE_URL=https://practice.expandtesting.com
+COOKIE_DOMAIN=practice.expandtesting.com
+```
+
+**E2E Test Configuration:**
+
+```dotenv
+E2E_TEST_PASSWORD=TestPassword123!
+E2E_WRONG_PASSWORD=WrongPassword456!
+E2E_CORRECT_PASSWORD=CorrectPassword123!
+```
+
+**Test User Configuration:**
+
+```dotenv
+API_TEST_PASSWORD=password123
+E2E_INVALID_USERNAME=nonexistentuser123456
+E2E_VALIDATION_USERNAME=testuser
+```
+
+### Usage in Tests
+
+**Playwright config:**
+
+```typescript
+use: {
+  baseURL: process.env.BASE_URL || 'https://practice.expandtesting.com',
+}
+```
+
+**Test fixtures:**
+
+```typescript
+password: process.env.API_TEST_PASSWORD || 'password123',
+domain: process.env.COOKIE_DOMAIN || 'practice.expandtesting.com',
+```
+
+**E2E tests:**
+
+```typescript
+await loginPage.login(
+  process.env.E2E_INVALID_USERNAME || 'nonexistentuser123456',
+  process.env.E2E_TEST_PASSWORD || 'password123'
+);
+```
+
+### Benefits
+
+- **Centralized configuration** — All test constants in one file
+- **Environment flexibility** — Easy to switch between dev/staging/prod
+- **No magic strings** — Descriptive variable names instead of hardcoded values
+- **Fallback support** — Default values if `.env` not loaded
+- **Version control safe** — `.env` included for portfolio/POC transparency
+
+**Note:** In production projects, `.env` would be gitignored and documented in `.env.example`.
 
 ## Locator Strategy
 
@@ -351,9 +453,11 @@ npx playwright test tests/e2e --headed
 
 1. **Page objects reduce duplication** — Tests are cleaner and more maintainable
 2. **Hybrid approach works well** — API setup + UI testing is fast and focused
-3. **Flexible locators are worth it** — Resilient selectors adapt to UI changes
-4. **Debug first, implement second** — Verify actual page structure before writing tests
-5. **Not all E2E needs to be pure** — Strategic API usage speeds up tests without sacrificing quality
+3. **Test helpers eliminate redundancy** — Extracted helpers reduced test code by ~30%
+4. **Environment config improves maintainability** — Centralized configuration eliminates magic strings
+5. **Flexible locators are worth it** — Resilient selectors adapt to UI changes
+6. **Debug first, implement second** — Verify actual page structure before writing tests
+7. **Not all E2E needs to be pure** — Strategic API usage speeds up tests without sacrificing quality
 
 ## Related Documentation
 
