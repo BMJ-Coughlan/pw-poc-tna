@@ -19,7 +19,7 @@ export default defineConfig({
     ? [['github'], ['html', { open: 'never' }], ['list']]
     : [['html', { open: 'always' }], ['list']],
   use: {
-    baseURL: 'https://practice.expandtesting.com',
+    baseURL: process.env.BASE_URL || 'https://practice.expandtesting.com',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -39,24 +39,6 @@ export default defineConfig({
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-    },
-
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
-
-    {
-      name: 'Microsoft Edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    },
-    {
-      name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
   ],
 

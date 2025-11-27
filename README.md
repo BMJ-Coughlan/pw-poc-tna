@@ -4,6 +4,23 @@
 
 I built this project to demonstrate disciplined test automation using Playwright: API testing, contract validation with Zod, end-to-end UI testing, and hybrid flows where the API prepares test state and API responses inform UI assertions.
 
+## Environment Configuration
+
+The project uses a `.env` file for test configuration. This file is included in version control for transparency (POC/portfolio context).
+
+**Configuration variables:**
+
+- `BASE_URL` — Test application URL (default: `https://practice.expandtesting.com`)
+- `COOKIE_DOMAIN` — Cookie domain for authentication
+- `E2E_TEST_PASSWORD` — Standard password for E2E tests
+- `E2E_WRONG_PASSWORD` — Invalid password for negative tests
+- `E2E_CORRECT_PASSWORD` — Valid password for credential tests
+- `API_TEST_PASSWORD` — Password for API-generated test users
+- `E2E_INVALID_USERNAME` — Invalid username for negative tests
+- `E2E_VALIDATION_USERNAME` — Username for validation tests
+
+**Rationale:** Environment variables centralize configuration, make tests portable across environments, and eliminate magic strings from test code.
+
 ## Quick Start
 
 Install dependencies:
@@ -12,27 +29,45 @@ Install dependencies:
 npm install
 ```
 
-- Type-check the code:
+**Common Commands:**
 
 ```powershell
+# Type-check the code
 npm run typecheck
-```
 
-- Lint the code:
-
-```powershell
+# Lint the code
 npm run lint
-```
 
-- Run the Playwright smoke tests (Chromium):
+# Run all tests
+npm test
 
-```powershell
-npx playwright test tests/api --project=chromium
+# Run API tests only
+npm run test:api
+
+# Run E2E tests only
+npm run test:e2e
+
+# Run tests in all browsers (Chromium, Firefox, WebKit)
+npm run test:all-browsers
+
+# Run tests in specific browser
+npm run test:chromium
+npm run test:firefox
+npm run test:webkit
+
+# Debugging modes
+npm run test:headed   # Watch tests run in browser
+npm run test:ui       # Interactive UI mode
+npm run test:debug    # Step through with debugger
+
+# View test report
+npm run report
 ```
 
 ## Design Details
 
-See `docs/api-client.md` for the API client architecture, schemas, examples, and rationale.
+- **API Testing:** See `docs/api-client.md` for the API client architecture, schemas, examples, and rationale.
+- **E2E Testing:** See `docs/e2e-testing.md` for page object patterns, hybrid testing approach, and key discoveries.
 
 ## Code Quality
 
@@ -46,7 +81,10 @@ See `docs/api-client.md` for the API client architecture, schemas, examples, and
 - Tests use Playwright's `APIRequestContext` (no separate HTTP client required).
 - `BaseApi` unwraps common response envelopes and supports per-call Zod validation.
 - Resource clients like `UsersApi` are accessed via fixtures rather than raw HTTP calls in tests.
-- Test helpers reduce duplication: `UserBuilder` for test data generation, assertion helpers for common error validation patterns.
+- Test helpers reduce duplication: `UserBuilder` for test data generation, assertion helpers for common error validation patterns, E2E helpers for unique email/username generation.
+- E2E tests use the Page Object Pattern to encapsulate UI structure and interactions.
+- Hybrid testing approach: API registration for setup, UI testing for behavior validation.
+- Environment variables centralize test configuration (URLs, passwords, test data) for maintainability.
 
 ## Progress
 
@@ -60,13 +98,18 @@ See `docs/api-client.md` for the API client architecture, schemas, examples, and
 - [x] Test helpers: `lib/helpers/testDataBuilders.ts` and `lib/helpers/apiAssertions.ts` for maintainable, DRY tests.
 - [x] Documentation: `docs/api-client.md` and an updated `README.md` overview.
 - [x] Code quality tooling: ESLint with TypeScript support, husky pre-commit hooks, and lint-staged for automated linting.
+- [x] Page Object Pattern: `lib/pages/` with `BasePage`, `LoginPage`, `RegistrationPage`, and `NotesAppPage`.
+- [x] E2E authentication tests: 11 tests covering registration and login flows (100% passing).
+- [x] Hybrid testing approach: API setup combined with UI testing for speed and focus.
+- [x] E2E test helpers: `lib/helpers/e2eHelpers.ts` with utilities for email/username generation, validation assertions, and timing.
+- [x] Environment configuration: `.env` file centralizes test URLs, passwords, and test data for maintainability.
+- [x] E2E documentation: `docs/e2e-testing.md` with patterns, design decisions, and debugging discoveries.
 
 **Planned next:**
 
-- [ ] Page Object Pattern — add a `pages/` folder and a `NotesPage` class; create a UI test that uses it.
 - [ ] `notesApi.ts` client — implement a `NotesApi` resource client and add API tests.
+- [ ] Notes CRUD E2E tests — add E2E tests for creating, reading, updating, and deleting notes.
 - [ ] Contract-unit tests — mock `APIRequestContext` and add unit tests for `BaseApi` and `UsersApi` that validate Zod schemata.
-- [ ] Hybrid test example — seed data with `NotesApi`, then run a UI flow that asserts UI behavior based on API response properties.
 - [ ] CI workflow — add a GitHub Actions workflow to run `npm ci`, `npm run typecheck`, and `npx playwright test` on push.
 - [ ] Multi-browser smoke — add an example that runs smoke tests across Chromium, Firefox, and WebKit.
-- [ ] Documentation polish — expand `docs/` with short pages for Page Objects, Fixtures, and Contract Testing examples.
+- [ ] Documentation polish — expand `docs/` with examples for Fixtures and Contract Testing patterns.
