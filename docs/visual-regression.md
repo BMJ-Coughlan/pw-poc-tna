@@ -136,13 +136,23 @@ Tests cover multiple viewports:
 
 ### Tagging Strategy
 
-Visual tests use `@visual` tag for selective execution:
+Visual tests use `@visual` tag for selective execution.
 
-```yaml
-# Run only on main branch (comprehensive validation)
-if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-npx playwright test --grep @visual
-fi
+### CI Job
+
+A dedicated "Visual Regression (Chromium on Windows)" job runs:
+
+- On `main` and on manual dispatch
+- On `windows-latest` to match committed `*-win32.png` baselines
+- With Chromium only: `npx playwright test --project=chromium --grep @visual`
+- Uploads `*-diff.png`, `*-actual.png`, `*-expected.png` as artifacts on failure
+
+### Local Scripts
+
+```powershell
+npm run test:visual            # Run Chromium visual tests
+npm run test:visual:update     # Update baselines intentionally
+npm run test:visual:ui         # Debug in UI mode
 ```
 
 ### Artifact Storage
