@@ -5,22 +5,29 @@ I designed this project as a lightweight proof-of-concept to demonstrate discipl
 ## Goals
 
 - Maintain a strong separation of concerns: a small `BaseApi` handles request/response plumbing and per-resource clients contain domain logic.
-- Validate contracts using Zod schemata for request and response shapes.
+- Validate contracts using Zod schemas for request and response shapes.
 - Integrate natively with Playwright via `APIRequestContext` for live HTTP calls inside tests.
 - Make components testable: keep classes small so they can be unit-tested with a mocked `APIRequestContext`.
 
 ## Layout
 
-- `lib/apis/baseApi.ts` — `BaseApi` wraps Playwright `APIRequestContext` and provides `get/post/patch/delete` helpers. It handles:
-  - Parsing JSON responses and unwrapping a common `data` envelope.
-  - Throwing a uniform `ApiError` on HTTP failures.
-  - Optional per-call Zod validation.
+- `lib/apis/` — API clients organized by resource (`baseApi.ts`, `usersApi.ts`, etc.)
+  - `baseApi.ts` wraps Playwright `APIRequestContext` and provides `get/post/patch/delete` helpers, envelope unwrapping, error handling, and optional Zod validation.
+  - `usersApi.ts` — Resource client for Users (register, login, profile, logout).
 
-- `lib/apis/usersApi.ts` — Resource client for Users (register, login, profile, logout). It accepts either a `BaseApi` or `APIRequestContext` in the constructor.
+- `lib/schemas/` — Centralized Zod schemas for request/response validation (`authSchemas.ts`, etc.)
 
-- `lib/data/schemata/*.ts` — Centralized Zod schemata. Resource clients import schemata to validate requests and responses.
+- `lib/fixtures/` — Playwright fixtures that instantiate API clients and provide test utilities (`testBase.ts`)
 
-- `lib/fixtures/testBase.ts` — Playwright fixtures instantiate resource clients and wire them into tests (for example, an `authAPI` fixture exposing `UsersApi`).
+- `lib/helpers/` — Test utilities to reduce duplication and improve test clarity
+  - `testDataBuilders.ts` — Factory methods for generating test data (e.g., `UserBuilder.valid()`)
+  - `apiAssertions.ts` — Reusable assertion helpers for common API error validation patterns
+
+- `lib/pages/` — Page Object Models for UI testing (future)
+
+- `tests/api/` — API and contract tests organized by resource (e.g., `register.spec.ts`, `login.spec.ts`)
+
+- `tests/e2e/` — End-to-end UI tests (future)
 
 ## Patterns and Rationale
 
@@ -28,36 +35,110 @@ I designed this project as a lightweight proof-of-concept to demonstrate discipl
 - Use Zod for both outgoing request validation (to catch test-side bugs) and incoming response validation (to detect contract drift).
 - Keep resource clients single-purpose — map each client to a REST resource (Users, Notes, etc.).
 - Use fixtures to provide ready-to-use instances for tests instead of constructing clients inside tests.
+- **Test helpers for maintainability** — Extract common test patterns (data builders, assertions) to reduce duplication while keeping test intent clear. This demonstrates understanding of when to abstract vs when to keep explicit.
+
+### Test Data Builders
+
+Test data builders encapsulate common patterns for creating test data, reducing noise and making tests more maintainable:
+
+```ts
+// Before: Manual test data with timestamp boilerplate
+const user = {
+  name: 'Test User',
+  email: `test-${Date.now()}@example.com`,
+  password: 'password123',
+};
+
+// After: Clear intent, consistent generation
+const user = UserBuilder.valid();
+const invalidUser = UserBuilder.withInvalid('email');
+```
+
+**Benefits:**
+
+- Changes to test data shape happen in one place
+- Self-documenting code (`withInvalid('email')` is clearer than `{ email: 'not-an-email' }`)
+- Reduces test file length by ~40% while improving clarity
+
+### Assertion Helpers
+
+Common assertion patterns are extracted to helpers, reducing try/catch boilerplate:
+
+```ts
+// Before: Repetitive error validation
+try {
+  await authAPI.login(email, 'wrong');
+  throw new Error('Expected to fail');
+} catch (error) {
+  expect(error).toBeInstanceOf(ApiError);
+  const apiError = error as ApiError;
+  expect(apiError.status).toBe(401);
+  expect(apiError.body).toBeDefined();
+}
+
+// After: Clear and concise
+try {
+  await authAPI.login(email, 'wrong');
+  throw new Error('Expected to fail');
+} catch (error) {
+  expectApiError(error, 401);
+}
+```
+
+**Design principle:** Helpers remove noise, not signal. Test-specific logic remains in the test file to keep tests readable without jumping to helper definitions.
 
 ## Examples
 
-- Register a user (in tests, via fixture):
+Register and login using test helpers:
 
 ```ts
-// uses UsersApi from fixture
-await authAPI.register({ name, email, password });
-const token = await authAPI.login(email, password);
+// Generate unique test user
+const user = UserBuilder.valid({ password: 'securePassword123' });
+await authAPI.register(user);
+
+// Login with generated credentials
+const token = await authAPI.login(user.email, user.password);
+expect(token).toBeTruthy();
 ```
 
-- Validate a server response with a schema when posting:
+Test validation errors with builders:
 
 ```ts
-const user = await base.post('/users/register', { data: userReq }, RegisterResponseSchema);
+// Test invalid email format
+const invalidUser = UserBuilder.withInvalid('email');
+await expectToThrow(() => authAPI.register(invalidUser));
+```
+
+Validate error responses:
+
+```ts
+try {
+  await authAPI.login(user.email, 'wrongPassword');
+  throw new Error('Expected login to fail');
+} catch (error) {
+  const apiError = expectApiError(error, 401);
+  expectErrorMessage(apiError);
+}
 ```
 
 ## Extending
 
-- Add `notesApi.ts` following the `UsersApi` pattern.
-- Add unit tests for `BaseApi` and `UsersApi` using a mocked `APIRequestContext`.
+- Add new resource clients following the `UsersApi` pattern
+- Create corresponding test data builders in `lib/helpers/testDataBuilders.ts`
+- Add unit tests for `BaseApi` and resource clients using a mocked `APIRequestContext`
+- Organize tests by resource (e.g., `notes.spec.ts`) with both happy and sad paths in the same file
 
-## Portfolio value
+## Portfolio Value
 
-- This layout demonstrates:
-  - Dependency injection (pass request context / base client into resource client)
-  - Contract-first testing (Zod schemata validate contracts)
-  - Playwright-native API usage (no separate HTTP library required)
+This layout demonstrates:
 
-## API contract
+- Dependency injection (passing request context or base client into resource clients)
+- Contract-first testing (Zod schemas validate contracts at runtime)
+- Playwright-native API usage (no separate HTTP library required)
+- **Test maintainability** — balancing DRY principles with test clarity through targeted abstractions
+- **Professional judgment** — knowing when to abstract (data generation, common assertions) vs. when to keep explicit (test-specific logic)
+
+## API Contract
 
 This section documents the concrete API shapes that this proof-of-concept expects and validates at runtime using Zod.
 
@@ -66,13 +147,15 @@ This section documents the concrete API shapes that this proof-of-concept expect
 
 ```json
 {
-  "data": { /* resource payload */ },
+  "data": {
+    /* resource payload */
+  },
   "status": 200,
   "message": "OK"
 }
 ```
 
-- `BaseApi` prefers the `data` property when unwrapping responses; schemata often use `.passthrough()` to tolerate additional envelope metadata.
+- `BaseApi` prefers the `data` property when unwrapping responses; schemas often use `.catchall()` to tolerate additional envelope metadata.
 - **Error semantics:** non-2xx responses cause `ApiError` to be thrown with `status` and the parsed `body`.
 
 ### Key endpoints (POC)
