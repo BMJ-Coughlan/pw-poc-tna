@@ -14,16 +14,45 @@
    - Can be triggered manually from GitHub Actions UI
    - Accepts optional `tags` parameter for filtered test execution
 
+### Test Tags
+
+Tests are organized with the following tags for flexible filtering:
+
+**Suite Tags:**
+
+- `@api` — All API tests (16 tests)
+- `@e2e` — All E2E UI tests (11 tests)
+
+**Category Tags:**
+
+- `@smoke` — Critical happy path tests (4 tests: 2 API + 2 E2E)
+- `@regression` — Validation and edge case tests
+- `@validation` — Form/input validation specific tests
+
+**Example Tag Combinations:**
+
+```bash
+@smoke              # Run only smoke tests (4 tests)
+@api                # Run all API tests (16 tests)
+@e2e                # Run all E2E tests (11 tests)
+@regression         # Run all regression tests
+@api.*@smoke        # API smoke tests only
+@e2e.*@smoke        # E2E smoke tests only
+@validation         # All validation tests
+```
+
 ### Manual Run Instructions
 
 1. Go to **Actions** tab in GitHub
 2. Select **Playwright Tests** workflow
 3. Click **Run workflow** button
 4. (Optional) Enter test tags in the input field:
-   - Leave empty to run all tests
-   - Use `@smoke` to run smoke tests only
+   - Leave empty to run all tests (27 tests)
+   - Use `@smoke` to run smoke tests only (4 tests)
+   - Use `@api` for API tests only (16 tests)
+   - Use `@e2e` for E2E tests only (11 tests)
    - Use `@regression` for regression suite
-   - Use any grep pattern to filter tests
+   - Combine with `.*` for AND logic: `@api.*@smoke`
 
 ### Features
 

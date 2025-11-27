@@ -14,8 +14,11 @@ import {
  * API to ensure known credentials exist, then login flow is tested.
  */
 
-test.describe('Login Flow - E2E', () => {
-  test('should login successfully with valid credentials', async ({ page, authAPI }, testInfo) => {
+test.describe('Login Flow - E2E @e2e', () => {
+  test('should login successfully with valid credentials @smoke', async ({
+    page,
+    authAPI,
+  }, testInfo) => {
     // Pre-register user via API (API creates accounts that work with UI login)
     const uniqueEmail = generateUniqueEmail('login', testInfo);
     const userData = {
@@ -39,7 +42,7 @@ test.describe('Login Flow - E2E', () => {
     expect(url.includes('/notes/app') || !hasError).toBeTruthy();
   });
 
-  test('should show error for invalid credentials', async ({ page }) => {
+  test('should show error for invalid credentials @regression', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
@@ -70,7 +73,9 @@ test.describe('Login Flow - E2E', () => {
     await expectValidationFailure(page, loginPage, '/login');
   });
 
-  test('should show validation error for empty username', async ({ page }) => {
+  test('should show validation error for empty username @regression @validation', async ({
+    page,
+  }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
@@ -79,7 +84,9 @@ test.describe('Login Flow - E2E', () => {
     await expectValidationFailure(page, loginPage, 'login');
   });
 
-  test('should show validation errors for missing username', async ({ page }) => {
+  test('should show validation errors for missing username @regression @validation', async ({
+    page,
+  }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 

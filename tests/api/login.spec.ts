@@ -10,8 +10,8 @@ import { expectApiError, expectErrorMessage, expectToThrow } from '../../lib/hel
  * response structures for authentication failures.
  */
 
-test.describe('User Login', () => {
-  test('should successfully login with valid credentials', async ({ authAPI }) => {
+test.describe('User Login @api', () => {
+  test('should successfully login with valid credentials @smoke', async ({ authAPI }) => {
     const user = UserBuilder.valid({ password: 'validpassword123' });
     await authAPI.register(user);
 
@@ -20,11 +20,13 @@ test.describe('User Login', () => {
     expect(typeof token).toBe('string');
   });
 
-  test('should reject login with invalid email format', async ({ authAPI }) => {
+  test('should reject login with invalid email format @regression @validation', async ({
+    authAPI,
+  }) => {
     await expectToThrow(() => authAPI.login('not-an-email', 'password123'));
   });
 
-  test('should reject login with empty password', async ({ authAPI }) => {
+  test('should reject login with empty password @regression @validation', async ({ authAPI }) => {
     await expectToThrow(() => authAPI.login('test@example.com', ''));
   });
 
