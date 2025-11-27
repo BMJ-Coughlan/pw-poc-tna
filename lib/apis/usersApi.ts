@@ -84,7 +84,11 @@ export class UsersApi {
         LoginResponseSchema
       );
       // LoginResponseSchema validation ensures token exists
-      return data?.token ?? data?.data?.token ?? '';
+      const token = data?.token ?? data?.data?.token;
+      if (!token) {
+        throw new ApiError('Login response missing token');
+      }
+      return token;
     } catch (err) {
       if (err instanceof ApiError) throw err;
       throw new ApiError(String(err));
