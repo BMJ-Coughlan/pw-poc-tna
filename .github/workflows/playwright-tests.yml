@@ -152,7 +152,7 @@ jobs:
         if: always()
         with:
           files: |
-            results.xml
+            test-results/junit.xml
           check_name: 'Test Results (${{ matrix.browser }})'
           comment_mode: off
           github_token: ${{ secrets.GITHUB_TOKEN }}
