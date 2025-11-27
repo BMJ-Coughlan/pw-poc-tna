@@ -97,24 +97,24 @@ export class BaseApi {
   /** Perform a GET request and optionally validate the response. */
   async get<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.get(path, opts);
-    return this.parseAndValidate(res, schema) as Promise<T>;
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 
   /** Perform a POST request and optionally validate the response. */
   async post<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.post(path, opts);
-    return this.parseAndValidate(res, schema) as Promise<T>;
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 
   /** Perform a PATCH request and optionally validate the response. */
   async patch<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.patch(path, opts);
-    return this.parseAndValidate(res, schema) as Promise<T>;
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 
   /** Perform a DELETE request and optionally validate the response. */
   async delete<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.delete(path, opts);
-    return this.parseAndValidate(res, schema) as Promise<T>;
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 }
