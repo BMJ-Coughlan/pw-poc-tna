@@ -15,6 +15,22 @@ export type ResponseEnvelope<T> = {
 };
 
 /**
+ * Options for API request methods.
+ * Provides type safety for request configuration options.
+ */
+export interface ApiRequestOptions {
+  data?: Record<string, unknown> | string;
+  form?: Record<string, string | number | boolean>;
+  headers?: Record<string, string>;
+  params?: Record<string, string | number | boolean> | URLSearchParams | string;
+  timeout?: number;
+  failOnStatusCode?: boolean;
+  ignoreHTTPSErrors?: boolean;
+  maxRedirects?: number;
+  maxRetries?: number;
+}
+
+/**
  * Generic API error thrown when requests fail or validation fails.
  *
  * - `status`: HTTP status code when available
@@ -22,8 +38,8 @@ export type ResponseEnvelope<T> = {
  */
 export class ApiError extends Error {
   status?: number;
-  body?: any;
-  constructor(message: string, status?: number, body?: any) {
+  body?: unknown;
+  constructor(message: string, status?: number, body?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -54,7 +70,7 @@ export class BaseApi {
    */
   private async parseAndValidate(response: APIResponse, schema?: z.ZodTypeAny) {
     const text = await response.text();
-    let body: any;
+    let body: unknown;
     try {
       body = text ? JSON.parse(text) : undefined;
     } catch {
@@ -66,7 +82,10 @@ export class BaseApi {
       throw new ApiError(`Request failed with status ${status}`, status, body ?? text);
     }
 
-    const payload = body && typeof body === 'object' && 'data' in body ? body.data : body;
+    const payload =
+      body && typeof body === 'object' && body !== null && 'data' in body
+        ? (body as Record<string, unknown>).data
+        : body;
 
     if (schema) {
       schema.parse(payload ?? body);
@@ -76,26 +95,26 @@ export class BaseApi {
   }
 
   /** Perform a GET request and optionally validate the response. */
-  async get<T>(path: string, opts: any = {}, schema?: z.ZodTypeAny): Promise<T> {
+  async get<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.get(path, opts);
-    return this.parseAndValidate(res, schema);
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 
   /** Perform a POST request and optionally validate the response. */
-  async post<T>(path: string, opts: any = {}, schema?: z.ZodTypeAny): Promise<T> {
+  async post<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.post(path, opts);
-    return this.parseAndValidate(res, schema);
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 
   /** Perform a PATCH request and optionally validate the response. */
-  async patch<T>(path: string, opts: any = {}, schema?: z.ZodTypeAny): Promise<T> {
+  async patch<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.patch(path, opts);
-    return this.parseAndValidate(res, schema);
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 
   /** Perform a DELETE request and optionally validate the response. */
-  async delete<T>(path: string, opts: any = {}, schema?: z.ZodTypeAny): Promise<T> {
+  async delete<T>(path: string, opts: ApiRequestOptions = {}, schema?: z.ZodTypeAny): Promise<T> {
     const res = await this.request.delete(path, opts);
-    return this.parseAndValidate(res, schema);
+    return (await this.parseAndValidate(res, schema)) as T;
   }
 }

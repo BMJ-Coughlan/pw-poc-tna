@@ -16,7 +16,12 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 8,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI
-    ? [['github'], ['html', { open: 'never' }], ['list']]
+    ? [
+        ['github'],
+        ['html', { open: 'never' }],
+        ['junit', { outputFile: 'test-results/junit.xml' }],
+        ['list'],
+      ]
     : [['html', { open: 'always' }], ['list']],
   use: {
     baseURL: process.env.BASE_URL || 'https://practice.expandtesting.com',

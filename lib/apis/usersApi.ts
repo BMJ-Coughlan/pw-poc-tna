@@ -5,6 +5,8 @@ import {
   RegisterResponseSchema,
   LoginRequestSchema,
   LoginResponseSchema,
+  RegisterResponse,
+  LoginResponse,
 } from '../schemas/authSchemas';
 
 /**
@@ -39,12 +41,16 @@ export class UsersApi {
    * @returns the registration response payload (may include `id`, `email`, etc.)
    * @throws {ApiError} when the request fails or validation fails
    */
-  async register(user: { name: string; email: string; password: string }): Promise<any> {
+  async register(user: {
+    name: string;
+    email: string;
+    password: string;
+  }): Promise<RegisterResponse> {
     RegisterUserRequestSchema.parse(user);
 
     try {
       // BaseApi.post will validate envelope and return the `data` payload
-      const data = await this.base.post<any>(
+      const data = await this.base.post<RegisterResponse>(
         '/notes/api/users/register',
         { data: user },
         RegisterResponseSchema
@@ -72,13 +78,17 @@ export class UsersApi {
     LoginRequestSchema.parse({ email, password });
 
     try {
-      const data = await this.base.post<any>(
+      const data = await this.base.post<LoginResponse>(
         '/notes/api/users/login',
         { data: { email, password } },
         LoginResponseSchema
       );
       // LoginResponseSchema validation ensures token exists
-      return data?.token ?? data?.data?.token;
+      const token = data?.token ?? data?.data?.token;
+      if (!token) {
+        throw new ApiError('Login response missing token');
+      }
+      return token;
     } catch (err) {
       if (err instanceof ApiError) throw err;
       throw new ApiError(String(err));
