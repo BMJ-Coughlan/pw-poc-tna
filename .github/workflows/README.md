@@ -76,8 +76,20 @@ Tests are organized with the following tags for flexible filtering:
 **Artifacts:**
 
 - Test reports uploaded for all runs (7-day retention)
+- JUnit XML results for each browser (7-day retention)
 - Test traces uploaded on failure (7-day retention)
 - Separate artifacts per browser for easy debugging
+
+**Test Result Reporting:**
+
+- **Interactive UI in GitHub Actions** — Test results displayed in Checks tab with:
+  - Pass/fail rates and trends
+  - Test duration metrics
+  - Detailed failure information
+  - Comparison with previous runs
+- **Per-browser results** — Individual check for each browser (chromium, firefox, webkit)
+- **Combined summary** — Aggregated results across all browsers
+- **PR comments** — Test results automatically posted on pull requests (if enabled)
 
 **Result Summary:**
 
@@ -113,12 +125,28 @@ E2E_VALIDATION_USERNAME=testuser
 
 ### Viewing Results
 
-**HTML Reports:**
+**Interactive Test Report (GitHub UI):**
+
+1. Go to workflow run in **Actions** tab
+2. Click on **Checks** tab at the top
+3. See interactive test results:
+   - **Test Results (chromium/firefox/webkit)** — Per-browser breakdown
+   - **Combined Test Results (All Browsers)** — Overall summary
+   - Pass rates, duration, trends vs previous runs
+   - Click on failed tests to see error details
+
+**HTML Reports (Downloadable):**
 
 1. Go to failed/completed workflow run
 2. Scroll to **Artifacts** section
 3. Download `playwright-report-{browser}` artifact
 4. Extract and open `index.html` in browser
+
+**JUnit XML Results:**
+
+1. Download `junit-results-{browser}` artifact
+2. Import into test management tools or CI dashboards
+3. Compatible with Azure DevOps, Jenkins, etc.
 
 **Test Traces (on failure):**
 
