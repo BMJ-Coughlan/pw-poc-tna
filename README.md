@@ -12,28 +12,39 @@ Install dependencies:
 npm install
 ```
 
-- Type-check the code:
+**Common Commands:**
 
 ```powershell
+# Type-check the code
 npm run typecheck
-```
 
-- Lint the code:
-
-```powershell
+# Lint the code
 npm run lint
-```
 
-- Run the Playwright smoke tests (Chromium):
+# Run all tests
+npm test
 
-```powershell
-npx playwright test tests/api --project=chromium
-```
+# Run API tests only
+npm run test:api
 
-- Run the E2E tests (Chromium):
+# Run E2E tests only
+npm run test:e2e
 
-```powershell
-npx playwright test tests/e2e --project=chromium
+# Run tests in all browsers (Chromium, Firefox, WebKit)
+npm run test:all-browsers
+
+# Run tests in specific browser
+npm run test:chromium
+npm run test:firefox
+npm run test:webkit
+
+# Debugging modes
+npm run test:headed   # Watch tests run in browser
+npm run test:ui       # Interactive UI mode
+npm run test:debug    # Step through with debugger
+
+# View test report
+npm run report
 ```
 
 ## Design Details
