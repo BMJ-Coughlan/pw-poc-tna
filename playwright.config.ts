@@ -19,7 +19,7 @@ export default defineConfig({
     ? [['github'], ['html', { open: 'never' }], ['list']]
     : [['html', { open: 'always' }], ['list']],
   use: {
-    baseURL: 'https://practice.expandtesting.com',
+    baseURL: process.env.BASE_URL || 'https://practice.expandtesting.com',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

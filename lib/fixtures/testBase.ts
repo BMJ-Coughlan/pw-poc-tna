@@ -44,7 +44,7 @@ export const test = base.extend<MyFixtures>({
     const user = {
       name: `Test User ${uniqueId}`,
       email: `test_user_${uniqueId}@example.com`,
-      password: 'password123', // constant password for simplicity
+      password: process.env.API_TEST_PASSWORD || 'password123',
       token: '',
     };
 
@@ -74,7 +74,7 @@ export const test = base.extend<MyFixtures>({
       {
         name: 'token',
         value: userProfile.token,
-        domain: 'practice.expandtesting.com',
+        domain: process.env.COOKIE_DOMAIN || 'practice.expandtesting.com',
         path: '/',
       },
     ]);
