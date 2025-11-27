@@ -128,9 +128,9 @@ The workflow automatically selects appropriate tests based on the branch:
 
 ### Configuration
 
-#### Environment Variable Groups (Like Azure DevOps!)
+#### Environment Variable Groups
 
-The workflow uses environment variable groups similar to Azure DevOps, defined at the workflow level:
+The workflow uses environment variable groups, defined at the workflow level:
 
 **Production Environment:**
 
@@ -170,7 +170,6 @@ E2E_VALIDATION_USERNAME: 'testuser'
 - ✅ Easy to update URLs for different environments
 - ✅ No need to configure GitHub Secrets/Variables
 - ✅ Clear separation of environment-specific values
-- ✅ Similar pattern to Azure DevOps variable groups
 
 **To modify:** Edit the `env:` section at the top of `playwright-tests.yml`
 
@@ -215,7 +214,7 @@ These will take precedence over the workflow-level environment groups when set.
 
 1. Download `junit-results-{browser}` artifact
 2. Import into test management tools or CI dashboards
-3. Compatible with Azure DevOps, Jenkins, etc.
+3. Compatible with Github Actions, Azure DevOps, Jenkins, etc.
 
 **Test Traces (on failure):**
 

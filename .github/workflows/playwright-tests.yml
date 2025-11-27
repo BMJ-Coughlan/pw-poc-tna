@@ -78,7 +78,7 @@ jobs:
             echo "strategy=smoke" >> $GITHUB_OUTPUT
           fi
 
-      # Environment selection using prefix-based variable groups (similar to Azure DevOps)
+      # Environment selection using prefix-based variable groups
       # Automatically maps branches to environments or allows manual override
       # Variables are prefixed (e.g., production_BASE_URL, staging_BASE_URL)
       - name: Determine environment configuration
