@@ -50,6 +50,8 @@ npm run lint              # ESLint
 
 - **API Testing:** See `docs/api-client.md` for the API client architecture, schemas, examples, and rationale.
 - **E2E Testing:** See `docs/e2e-testing.md` for page object patterns, hybrid testing approach, and key discoveries.
+- **Accessibility Testing:** `docs/accessibility-testing.md` — WCAG 2.1 AA compliance with axe-core (quarantined: practice site has contrast violations)
+- **Visual Regression:** `docs/visual-regression.md` — Screenshot comparison testing (quarantined: third-party ads cause instability)
 - **CI/CD:** See `.github/workflows/README.md` for workflow configuration. Two pipelines: fast feedback on PRs (smoke tests), comprehensive nightly runs (full suite minus quarantined tests).
 - **Page Object Pattern** for UI tests
 - **API fixtures** via Playwright's `APIRequestContext`
