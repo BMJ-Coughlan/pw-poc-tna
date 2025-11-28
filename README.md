@@ -39,6 +39,7 @@ npm run lint              # ESLint
 - **API Testing:** `docs/api-client.md` — API client with Zod schemas and fixtures
 - **E2E Testing:** `docs/e2e-testing.md` — Page objects and hybrid API+UI approach
 - **Visual Regression:** `docs/visual-regression.md` — Quarantined due to third-party ads on practice site
+- **Accessibility Testing:** `docs/accessibility-testing.md` — WCAG checks with axe‑core (quarantined: known contrast violations on practice site)
 
 ## Code Quality
 
@@ -66,3 +67,10 @@ npm run lint              # ESLint
 - CI/CD pipeline (GitHub Actions, cross-browser, GitHub Checks integration)
 - Visual regression tests (quarantined due to ads)
 - Code quality tooling (ESLint, Prettier, husky)
+
+## For Reviewers
+
+- Run fast: `npm ci`; `npm run test:ui` to explore, or `npm test` for headless.
+- CI posture: PRs run smoke; nightly runs full suite excluding `@quarantine`.
+- Quarantined on purpose: visual and a11y tests demonstrate capability but the public SUT isn’t deterministic or accessible yet.
+- What to skim: `docs/` for architecture, `lib/apis/` + `tests/api/` for contract testing, `lib/pages/` + `tests/e2e/` for UI discipline.
