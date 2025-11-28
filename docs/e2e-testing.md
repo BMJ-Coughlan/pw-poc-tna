@@ -1,466 +1,103 @@
 # E2E Testing with Page Objects
 
-## Overview
+We use the **Page Object Pattern** for maintainable E2E tests. Page objects encapsulate UI structure and interactions so tests stay focused on behavior. Centralizing locators and semantics reduces churn.
 
-This project uses the **Page Object Pattern** to create maintainable, reusable end-to-end tests. Page objects encapsulate UI structure and interactions, keeping test logic clean and focused on behavior rather than implementation details.
+## Page Objects
 
-## Architecture
+**BasePage** provides common functionality:
 
-### Page Object Pattern
+- Navigation (`goto()`, `waitForLoadState()`)
+- Interactions (`fill()`, `click()`)
+- Assertions (`isVisible()`, `getText()`)
 
-Page objects provide a layer of abstraction between tests and the UI. Each page object:
+**LoginPage** (`/notes/app/login`):
 
-- **Encapsulates locators** — keeps CSS/XPath selectors in one place
-- **Provides semantic methods** — `login(email, password)` instead of raw `fill()` and `click()` calls
-- **Handles navigation** — `goto()` methods navigate to specific pages
-- **Exposes state checks** — `hasErrorMessage()`, `isAuthenticated()`, etc.
+- Uses `email` (not username) for API-based login
+- Methods: `login(email, password)`, `goToRegister()`, `hasErrorMessage()`
 
-### BasePage
+**RegistrationPage** (`/register`):
 
-All page objects inherit from `BasePage`, which provides common functionality:
+- Simple 3-field form (username/password/confirm)
+- Creates accounts separate from notes app
+- Methods: `register(username, password, confirm)`, `hasErrorMessage()`
 
-```typescript
-export class BasePage {
-  readonly page: Page;
+**NotesAppPage** (`/notes/app`):
 
-  // Navigation
-  async goto(path: string): Promise<void>;
-  async waitForLoadState(state?: 'load' | 'domcontentloaded' | 'networkidle'): Promise<void>;
+- Methods: `logout()`, `isAuthenticated()`, `waitForApp()`
 
-  // Interactions
-  async fill(locator: Locator, value: string): Promise<void>;
-  async click(locator: Locator): Promise<void>;
+## Coverage
 
-  // Assertions
-  async isVisible(locator: Locator): Promise<boolean>;
-  async getText(locator: Locator): Promise<string>;
-}
-```
+11 tests — registration (5) and login (6): success + validation/error cases. Enough to demonstrate discipline without trying to be exhaustive.
 
-**Design rationale:** Centralizing common operations in `BasePage` ensures consistency, reduces duplication, and makes it easier to add cross-cutting concerns (logging, retries, etc.) in the future.
+## Hybrid Testing
 
-### Page Objects
+The practice site has two separate auth systems:
 
-#### LoginPage
+1. Simple registration (`/register`) — username-based, doesn't work with notes app
+2. API registration — email-based, works with `/notes/app/login`
 
-**Path:** `/notes/app/login`
-
-**Fields:**
-
-- `emailInput` — accepts email addresses (discovered through debugging; not username)
-- `passwordInput` — password field
-- `rememberMeCheckbox` — optional remember me checkbox
-
-**Methods:**
-
-- `login(email, password, rememberMe?)` — fills and submits login form
-- `goToRegister()` — navigates to registration page
-- `hasErrorMessage()` — checks if error is displayed
-
-**Key discovery:** The login page uses **email** (not username) because it integrates with the API-based notes application. This differs from the simple `/register` form which uses username.
-
-#### RegistrationPage
-
-**Path:** `/register`
-
-**Fields:**
-
-- `usernameInput` — username field (3-field simple registration)
-- `passwordInput` — password field
-- `confirmPasswordInput` — password confirmation
-
-**Methods:**
-
-- `register(username, password, confirmPassword?)` — fills and submits registration form
-- `goToLogin()` — navigates to login page
-- `hasErrorMessage()` — checks if error is displayed
-
-**Key discovery:** This simple registration form creates accounts that are **separate from the notes app login system**. For testing the notes app, use API registration instead.
-
-#### NotesAppPage
-
-**Path:** `/notes/app`
-
-**Fields:**
-
-- `logoutButton` — logout control
-- `addNoteButton` — create note button
-- `profileLink` — user profile link
-- `pageHeading` — main page title
-
-**Methods:**
-
-- `logout()` — ends user session
-- `isAuthenticated()` — checks if user is logged in (via logout button visibility)
-- `waitForApp()` — waits for app to fully load
-
-## Test Organization
-
-Tests are organized by **user flow/feature**:
-
-```
-tests/e2e/
-├── registration.spec.ts  — Registration form UI tests (5 tests)
-└── login.spec.ts         — Login form UI tests (6 tests)
-```
-
-### Test Coverage
-
-**Total: 11 tests, 100% passing**
-
-**Registration Tests (5):**
-
-- ✅ Successful registration with valid data
-- ✅ Validation error for missing username
-- ✅ Validation error for missing password
-- ✅ Validation error for short password
-- ✅ Validation error for password mismatch
-
-**Login Tests (6):**
-
-- ✅ Successful login with valid credentials
-- ✅ Error for non-existent user
-- ✅ Error for incorrect password
-- ✅ Validation error for empty email
-- ✅ Validation error for empty password
-- ✅ Navigation to registration page
-
-**Total: 11 tests, 100% passing**
-
-## Hybrid Testing Approach
-
-### The Challenge
-
-The test site has two separate authentication systems:
-
-1. **Simple registration** (`/register`) — username/password only, creates accounts that don't work with notes app login
-2. **API registration** (`/notes/api/users/register`) — full email-based registration, creates accounts that work with `/notes/app/login`
-
-### The Solution: Hybrid Testing
-
-We use a **hybrid approach** that combines API and UI testing:
+We use **hybrid testing**: API for setup, UI for validation.
 
 ```typescript
-test('should login successfully', async ({ page, authAPI }, testInfo) => {
-  // 1. Use API for test data setup (fast, reliable)
-  const userData = {
-    name: 'E2E Login User',
-    email: `e2e_login_w${testInfo.workerIndex}_${Date.now()}@example.com`,
-    password: 'TestPassword123!',
-  };
+test('login', async ({ page, authAPI }, testInfo) => {
+  // API setup (fast)
+  const userData = { name, email, password };
   await authAPI.register(userData);
 
-  // 2. Test the UI login experience
+  // Test UI
   const loginPage = new LoginPage(page);
-  await loginPage.goto();
   await loginPage.login(userData.email, userData.password);
 
-  // 3. Assert UI behavior
-  expect(page.url().includes('/notes/app') || !(await loginPage.hasErrorMessage())).toBeTruthy();
+  // Assert
+  expect(page.url().includes('/notes/app')).toBeTruthy();
 });
 ```
 
-### Benefits
+Benefits: fast, deterministic setup; UI asserts stay focused. Trade‑off: not pure E2E — acceptable given API coverage and portfolio goals.
 
-- **Speed** — API registration is faster than filling forms
-- **Reliability** — API setup is deterministic, no form validation edge cases
-- **Focus** — Tests focus on the UI behavior being tested, not setup
-- **Integration** — Verifies that API-registered users can use the UI (important integration check)
+## Test Data
 
-### Trade-offs
-
-- **Not pure E2E** — Setup happens via API, not through UI
-- **Requires API client** — Tests depend on `authAPI` fixture (already built for API tests)
-- **Coupling** — If API registration breaks, UI tests fail
-
-**Decision:** The hybrid approach is worth it because:
-
-1. We already have API tests covering registration thoroughly
-2. UI tests should focus on UI-specific behavior (validation messages, navigation)
-3. Test execution speed matters for developer feedback loops
-
-## Test Data Strategy
-
-### Worker-Safe Generation
-
-Tests generate unique data using `workerIndex` and `timestamp`:
+Tests generate unique data using `workerIndex` and `timestamp` for parallel execution:
 
 ```typescript
-const uniqueEmail = `e2e_login_w${testInfo.workerIndex}_${Date.now()}@example.com`;
+const email = `e2e_w${testInfo.workerIndex}_${Date.now()}@example.com`;
 ```
 
-**Why?**
+Passwords come from `.env` (`E2E_TEST_PASSWORD`, `E2E_WRONG_PASSWORD`).
 
-- **Parallel execution** — Playwright runs tests in parallel using multiple workers
-- **No collisions** — Each worker + timestamp combination is unique
-- **Deterministic** — Pattern is predictable but never reuses data
+**Helpers** (`lib/helpers/e2eHelpers.ts`):
 
-### Password Strategy
+- `generateUniqueEmail(prefix, testInfo)`
+- `generateUniqueUsername(testInfo)`
+- `waitForAuthResponse(page)` — 1s wait
+- `expectValidationFailure(page, pageObject, url)`
 
-Tests use environment-configured passwords from `.env`:
+Helpers reduced test files by ~30%.
 
-- `E2E_TEST_PASSWORD` — Standard valid password (`TestPassword123!`)
-- `E2E_WRONG_PASSWORD` — Invalid password for negative tests (`WrongPassword456!`)
-- `E2E_CORRECT_PASSWORD` — Valid password for credential mismatch tests (`CorrectPassword123!`)
+## Environment Config
 
-**Why?**
-
-- **Centralized configuration** — All passwords defined in one place
-- **Environment portability** — Easy to change for different test environments
-- **No magic strings** — Tests use `process.env.E2E_TEST_PASSWORD` instead of hardcoded values
-- **Not testing password rules** — API tests already cover password validation
-
-### Test Helpers
-
-E2E tests use helper functions from `lib/helpers/e2eHelpers.ts` to reduce duplication:
-
-**Data Generation:**
-
-```typescript
-generateUniqueEmail(prefix, testInfo); // Worker-safe unique emails
-generateUniqueUsername(testInfo); // Worker-safe unique usernames
-```
-
-**Timing Helpers:**
-
-```typescript
-waitForAuthResponse(page); // Standard 1s wait for login/auth
-waitForRegistrationComplete(page); // Extended 2s wait for registration redirect
-```
-
-**Assertion Helpers:**
-
-```typescript
-expectValidationFailure(page, pageObject, expectedUrl);
-// Asserts error shown OR page didn't navigate (common validation pattern)
-```
-
-**Benefits:**
-
-- **DRY tests** — Reduced test files by ~30% through helper extraction
-- **Consistent patterns** — Same data generation across all tests
-- **Semantic naming** — `waitForAuthResponse()` clearer than `page.waitForTimeout(1000)`
-- **Single source of truth** — Change timing strategy in one place
-
-## Environment Configuration
-
-Tests use environment variables from `.env` for configuration:
-
-**Application Configuration:**
+Tests use `.env` for configuration:
 
 ```dotenv
 BASE_URL=https://practice.expandtesting.com
-COOKIE_DOMAIN=practice.expandtesting.com
-```
-
-**E2E Test Configuration:**
-
-```dotenv
 E2E_TEST_PASSWORD=TestPassword123!
-E2E_WRONG_PASSWORD=WrongPassword456!
-E2E_CORRECT_PASSWORD=CorrectPassword123!
 ```
 
-**Test User Configuration:**
+## Locators
 
-```dotenv
-API_TEST_PASSWORD=password123
-E2E_INVALID_USERNAME=nonexistentuser123456
-E2E_VALIDATION_USERNAME=testuser
-```
-
-### Usage in Tests
-
-**Playwright config:**
-
-```typescript
-use: {
-  baseURL: process.env.BASE_URL || 'https://practice.expandtesting.com',
-}
-```
-
-**Test fixtures:**
-
-```typescript
-password: process.env.API_TEST_PASSWORD || 'password123',
-domain: process.env.COOKIE_DOMAIN || 'practice.expandtesting.com',
-```
-
-**E2E tests:**
-
-```typescript
-await loginPage.login(
-  process.env.E2E_INVALID_USERNAME || 'nonexistentuser123456',
-  process.env.E2E_TEST_PASSWORD || 'password123'
-);
-```
-
-### Benefits
-
-- **Centralized configuration** — All test constants in one file
-- **Environment flexibility** — Easy to switch between dev/staging/prod
-- **No magic strings** — Descriptive variable names instead of hardcoded values
-- **Fallback support** — Default values if `.env` not loaded
-- **Version control safe** — `.env` included for portfolio/POC transparency
-
-**Note:** In production projects, `.env` would be gitignored and documented in `.env.example`.
-
-## Locator Strategy
-
-### Flexible Locators
-
-Page objects use **multiple selector strategies** with fallbacks:
+Page objects use **flexible selectors** with fallbacks:
 
 ```typescript
 this.emailInput = page.locator('input#email, input[name="email"], input[type="email"]');
-this.errorMessage = page
-  .locator('[role="alert"], .error, .alert, .alert-danger, [data-testid="error-message"]')
-  .first();
+this.errorMessage = page.locator('[role="alert"], .error, .alert').first();
 ```
 
-**Why?**
+Resilient selectors reduce flake from minor UI changes. Prefer semantic/ARIA attributes when available.
 
-- **Resilience** — If one selector breaks, others may still work
-- **Adaptability** — Works with different UI implementations/frameworks
-- **ARIA support** — Prioritizes semantic HTML (`[role="alert"]`) when available
+## Notes
 
-### .first() Pattern
-
-When multiple matches are expected, we use `.first()`:
-
-```typescript
-this.errorMessage = page.locator('...multiple selectors...').first();
-```
-
-**Why?**
-
-- **Stability** — Always gets exactly one element, avoids "strict mode" violations
-- **Practical** — First error message is usually the relevant one
-- **Simple** — No need to filter or enumerate all matches
-
-## Assertions
-
-### Flexible Assertions
-
-Tests use **OR patterns** for assertions:
-
-```typescript
-const hasError = await loginPage.hasErrorMessage();
-const stillOnLogin = page.url().includes('/login');
-expect(hasError || stillOnLogin).toBeTruthy();
-```
-
-**Why?**
-
-- **Implementation agnostic** — Different error display methods all indicate failure
-- **Resilient** — Works whether app shows inline errors, alerts, or stays on page
-- **Realistic** — Users care about "did login fail?" not "which exact error appeared"
-
-### Trade-offs
-
-**Pros:**
-
-- Less brittle tests
-- Works across different UI implementations
-- Focuses on user-visible behavior
-
-**Cons:**
-
-- Less precise (can't assert exact error message)
-- May miss edge cases where both conditions are false
-- Harder to debug when assertions fail
-
-**Decision:** For E2E tests, resilience and speed matter more than precision. API tests already verify exact error messages and status codes.
-
-## Debugging Discoveries
-
-### Path Discovery Process
-
-Initial assumptions about paths were wrong. Discovery process:
-
-1. **Assumption:** Login at `/login`, registration at `/notes/register`
-2. **Reality:** Both paths returned 404
-3. **Investigation:** Created debug test to check multiple URLs
-4. **Discovery:**
-   - `/register` — simple 3-field registration (username-based)
-   - `/notes/app/login` — email-based login (integrates with API)
-   - `/login` — exists but separate from notes app
-5. **Solution:** Updated page objects to use correct paths
-
-**Lesson:** Don't assume — verify paths and field names through debugging before implementing tests.
-
-### Field Name Discovery
-
-Similar issue with form fields:
-
-1. **Assumption:** Login uses `username` field
-2. **Reality:** Uses `email` field at `/notes/app/login`
-3. **Discovery:** Debug test revealed `input#email` at API-integrated login page
-4. **Solution:** Changed `usernameInput` to `emailInput` in LoginPage
-
-**Lesson:** Inspect actual HTML when locators fail, don't guess based on similar forms elsewhere.
-
-## Running E2E Tests
-
-### All E2E tests
-
-```powershell
-npx playwright test tests/e2e --project=chromium
-```
-
-### Specific test file
-
-```powershell
-npx playwright test tests/e2e/login.spec.ts
-```
-
-### Single test by name
-
-```powershell
-npx playwright test --grep "should login successfully"
-```
-
-### With UI mode (debugging)
-
-```powershell
-npx playwright test tests/e2e --ui
-```
-
-### With headed browser (watch tests run)
-
-```powershell
-npx playwright test tests/e2e --headed
-```
-
-## Future Enhancements
-
-### Potential Improvements
-
-1. **Custom assertions** — Create `expect(loginPage).toShowError()` for cleaner test code
-2. **Network waiting** — Replace `waitForTimeout()` with network idle or specific request waits
-3. **Logout tests** — Add full session lifecycle tests once notes app integration is stable
-4. **Visual regression** — Add screenshot comparisons for critical pages
-5. **Mobile testing** — Add viewport configurations for responsive testing
-6. **Component library** — If app uses React/Vue, consider component testing alongside E2E
-
-### Not Planned (and why)
-
-- **Full E2E user journeys** — Test site limitations (separate registration systems) make this impractical
-- **Data-driven tests** — Current coverage is sufficient; parameterized tests would add complexity without value
-- **Multi-browser E2E** — Chromium coverage sufficient for this POC; API tests already verify logic cross-browser
-
-## Key Takeaways
-
-1. **Page objects reduce duplication** — Tests are cleaner and more maintainable
-2. **Hybrid approach works well** — API setup + UI testing is fast and focused
-3. **Test helpers eliminate redundancy** — Extracted helpers reduced test code by ~30%
-4. **Environment config improves maintainability** — Centralized configuration eliminates magic strings
-5. **Flexible locators are worth it** — Resilient selectors adapt to UI changes
-6. **Debug first, implement second** — Verify actual page structure before writing tests
-7. **Not all E2E needs to be pure** — Strategic API usage speeds up tests without sacrificing quality
-
-## Related Documentation
-
-- `docs/api-client.md` — API testing patterns and architecture
-- `lib/fixtures/testBase.ts` — Fixture setup for both API and E2E tests
-- `lib/pages/` — Page object implementations
+- Paths matter: `/login` vs `/notes/app/login` are distinct systems.
+- Field names matter: login uses `email`, not `username`.
+- Assertions should be resilient: `hasError || stillOnPage` beats exact error text.
+- Hybrid approach keeps E2E fast and focused.
+- Keep tests small; rely on API tests for contract precision.

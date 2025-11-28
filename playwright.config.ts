@@ -16,6 +16,14 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 8,
   /* Timeout for each test */
   timeout: 30000,
+  /* Default screenshot comparison behavior */
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixels: 800,
+      threshold: 0.25,
+      animations: 'disabled',
+    },
+  },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI
     ? [
