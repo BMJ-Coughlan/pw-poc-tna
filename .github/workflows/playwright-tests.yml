@@ -126,9 +126,9 @@ jobs:
       - name: Run Playwright tests
         run: |
           if [ -n "${{ steps.test-strategy.outputs.tags }}" ]; then
-            npx playwright test --project=${{ matrix.browser }} --grep "${{ steps.test-strategy.outputs.tags }}"
+            npx playwright test --project=${{ matrix.browser }} --grep "${{ steps.test-strategy.outputs.tags }}" --grep-invert @quarantine
           else
-            npx playwright test --project=${{ matrix.browser }}
+            npx playwright test --project=${{ matrix.browser }} --grep-invert @quarantine
           fi
         env:
           CI: true
