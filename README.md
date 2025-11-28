@@ -70,6 +70,7 @@ npm run report
 
 - **API Testing:** See `docs/api-client.md` for the API client architecture, schemas, examples, and rationale.
 - **E2E Testing:** See `docs/e2e-testing.md` for page object patterns, hybrid testing approach, and key discoveries.
+- **CI/CD:** See `.github/workflows/README.md` for workflow configuration. Two pipelines: fast feedback on PRs (smoke tests), comprehensive nightly runs (full suite minus quarantined tests).
 
 ## Code Quality
 
