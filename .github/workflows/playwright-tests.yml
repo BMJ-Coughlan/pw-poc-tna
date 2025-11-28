@@ -296,4 +296,3 @@ jobs:
   #           test-results/**/*-actual.png
   #           test-results/**/*-expected.png
   #         retention-days: 7
-
