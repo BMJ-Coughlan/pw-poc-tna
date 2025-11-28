@@ -23,6 +23,7 @@
     "test:visual": "playwright test tests/visual --project=chromium",
     "test:visual:update": "playwright test tests/visual --project=chromium --update-snapshots",
     "test:visual:ui": "playwright test tests/visual --ui",
+    "test:a11y": "playwright test --grep @a11y",
     "report": "playwright show-report"
   },
   "keywords": [],

@@ -2,6 +2,13 @@
 
 We use the **Page Object Pattern** for maintainable E2E tests. Page objects encapsulate UI structure and interactions so tests stay focused on behavior. Centralizing locators and semantics reduces churn.
 
+SME notes (why this approach):
+
+- Keep page objects thin; business logic belongs in tests, not pages.
+- Hybrid API+UI keeps flows fast and deterministic; pure UI setup is fragile and slow.
+- Prefer resilient, semantic selectors; avoid brittle CSS chains.
+- Keep tests short; push exhaustive edge cases to API/contract tests.
+
 ## Page Objects
 
 **BasePage** provides common functionality:

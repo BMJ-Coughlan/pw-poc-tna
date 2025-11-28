@@ -12,6 +12,13 @@ Disciplined API testing with Playwright: contract validation via Zod, typed clie
 - `lib/helpers/apiAssertions.ts` — Reusable assertion helpers for API errors
 - `tests/api/` — API tests organized by resource
 
+SME notes (design decisions):
+
+- Validate at the boundary with Zod to detect contract drift early without verbose test assertions.
+- Normalize response envelopes in `BaseApi` so tests work with clean data shapes.
+- Throw a consistent `ApiError(status, body)` on non‑2xx to keep error handling predictable.
+- Provide clients via fixtures to avoid ad‑hoc wiring and improve reuse.
+
 ## Test Helpers
 
 **Data Builders:**
