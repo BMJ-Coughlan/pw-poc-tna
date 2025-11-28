@@ -36,9 +36,10 @@ npm run lint              # ESLint
 
 ## Architecture
 
-- **API Testing:** `docs/api-client.md` — API client with Zod schemas and fixtures
-- **E2E Testing:** `docs/e2e-testing.md` — Page objects and hybrid API+UI approach
+- **API Testing:** See `docs/api-client.md` for the API client architecture, schemas, examples, and rationale.
+- **E2E Testing:** See `docs/e2e-testing.md` for page object patterns, hybrid testing approach, and key discoveries.
 - **Visual Regression:** `docs/visual-regression.md` — Quarantined due to third-party ads on practice site
+- **CI/CD:** See `.github/workflows/README.md` for workflow configuration. Two pipelines: fast feedback on PRs (smoke tests), comprehensive nightly runs (full suite minus quarantined tests).
 
 ## Code Quality
 
