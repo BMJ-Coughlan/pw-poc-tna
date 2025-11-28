@@ -10,6 +10,7 @@ SME view:
 
 - Control the environment (no third‑party ads) or intercept ad domains.
 - If not possible, use a visual platform (Percy/Chromatic/Applitools) with region ignores.
+- Tagging: tests are marked `@visual @quarantine` to keep CI stable while preserving the technique.
 
 What this work shows:
 
@@ -17,6 +18,7 @@ What this work shows:
 - Dynamic content masking for deterministic captures
 - Cross‑viewport coverage (mobile/tablet/desktop)
 - Practical `toHaveScreenshot()` usage
+- Platform-specific baselines (e.g., `*-chromium-win32.png`) to avoid cross-platform noise
 
 Why this approach: keep the technique visible in the portfolio, but quarantine it where the SUT isn’t deterministic.
 
