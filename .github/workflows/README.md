@@ -1,5 +1,14 @@
 # GitHub Actions CI/CD
 
+## Overview
+
+Two workflows provide different testing strategies:
+
+- **Playwright Tests** (`playwright-tests.yml`) — Fast feedback on push/PR with smart tag-based selection
+- **Nightly Tests** (`nightly-tests.yml`) — Comprehensive full suite daily at 2 AM UTC, excluding quarantined tests
+
+---
+
 ## Workflow: Playwright Tests
 
 **File:** `.github/workflows/playwright-tests.yml`
@@ -260,3 +269,139 @@ npx playwright test --project=webkit
 - Verify workflow file is in `main` or `develop` branch
 - Check branch protection rules
 - Ensure workflow has correct permissions
+
+---
+
+## Workflow: Nightly Tests
+
+**File:** `.github/workflows/nightly-tests.yml`
+
+### Triggers
+
+**Scheduled (Cron):**
+
+- Runs daily at 2 AM UTC
+- Schedule: `0 2 * * *`
+- Only runs on default branch
+
+**Manual (workflow_dispatch):**
+
+- Can be triggered manually from GitHub Actions UI
+- Accepts optional `environment` parameter to select configuration group
+
+### Purpose
+
+Provides comprehensive validation of the full test suite across all browsers on a nightly basis. Unlike the PR/push workflow which optimizes for fast feedback (smoke tests) or targeted regression, the nightly run executes everything to catch:
+
+- Integration issues that only appear with full coverage
+- Flakiness patterns across time
+- Cross-browser inconsistencies on less-critical paths
+
+**Exclusions:**
+
+- Tests tagged `@quarantine` are excluded via `--grep-invert @quarantine`
+- See `docs/visual-regression.md` for why visual tests are quarantined
+
+### Features
+
+**Cross-Browser Testing:**
+
+- Matrix strategy runs all tests in parallel across Chromium, Firefox, WebKit
+- Full suite execution (not tag-filtered like PR workflow)
+
+**Quality Checks:**
+
+- TypeScript type checking (`npm run typecheck`)
+- ESLint linting (`npm run lint`)
+- Playwright test execution with `--grep-invert @quarantine`
+
+**Environment Variables:**
+
+- Uses same configuration as `playwright-tests.yml`
+- Environment groups: production, staging, development
+- Auto-selects production by default
+- Test credentials shared across workflows
+
+**Artifacts:**
+
+- Test reports for all browsers (14-day retention, longer than PR workflow's 7 days)
+- JUnit XML results per browser (14-day retention)
+- Test traces on failure (14-day retention)
+- Separate artifacts per browser for debugging
+
+**Result Summary:**
+
+- Aggregates results from all browser matrix jobs
+- Combined summary job shows overall pass/fail status
+- Downloads all reports for inspection
+
+### Configuration
+
+#### Workflow Settings
+
+- **Timeout:** 30 minutes per job (longer than PR workflow's 15 min to accommodate full suite)
+- **Fail-fast:** Disabled (all browsers run even if one fails)
+- **Retry:** Configured in `playwright.config.ts` (2 retries on CI)
+- **Workers:** Configured in `playwright.config.ts` (2 workers on CI)
+
+#### Environment Selection
+
+- **auto** (default) — Uses production environment
+- **production** — Explicit production variables
+- **staging** — Staging environment variables
+- **development** — Development environment variables
+
+### Viewing Results
+
+Same as `playwright-tests.yml`:
+
+1. **Interactive UI** in GitHub Actions Checks tab
+2. **HTML Reports** in downloadable artifacts
+3. **JUnit XML** for integration with test management tools
+4. **Traces** on failure for debugging
+
+### Local Simulation
+
+Test the nightly run locally:
+
+```bash
+# Simulate nightly environment
+$env:CI = "true"
+npm ci
+npx playwright install --with-deps
+npm run typecheck
+npm run lint
+npx playwright test --grep-invert @quarantine
+```
+
+### Comparison: Nightly vs PR/Push
+
+| Feature                | PR/Push Workflow              | Nightly Workflow               |
+| ---------------------- | ----------------------------- | ------------------------------ |
+| **Trigger**            | Push/PR to develop/main       | Daily at 2 AM UTC              |
+| **Test Selection**     | Smart (smoke/regression/full) | Full suite minus `@quarantine` |
+| **Timeout**            | 15 minutes                    | 30 minutes                     |
+| **Artifact Retention** | 7 days                        | 14 days                        |
+| **Purpose**            | Fast feedback on changes      | Comprehensive validation       |
+| **Typical Duration**   | 2-5 minutes                   | 10-20 minutes                  |
+| **When to Use**        | Every commit/PR               | Background health monitoring   |
+
+### Troubleshooting
+
+**Nightly run timing out:**
+
+- Check if test suite has grown significantly
+- Review traces to find slow tests
+- Consider increasing timeout in workflow settings
+
+**Quarantined tests still running:**
+
+- Verify test files have `@quarantine` tag correctly formatted
+- Check `--grep-invert @quarantine` flag is applied
+- Test locally: `npx playwright test --grep-invert @quarantine`
+
+**Nightly not triggering:**
+
+- Verify workflow file is in default branch
+- Check if scheduled workflows are enabled in repository settings
+- Manual trigger still works even if cron is disabled
