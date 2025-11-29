@@ -18,6 +18,9 @@ test.describe('Registration Flow - E2E @e2e', () => {
   test('should register a new user successfully and navigate to login or app @smoke', async ({
     page,
   }, testInfo) => {
+    // Map to Xray test case XSP-54
+    testInfo.annotations.push({ type: 'xray', description: 'XSP-54' });
+
     const registrationPage = new RegistrationPage(page);
     await registrationPage.goto();
 
