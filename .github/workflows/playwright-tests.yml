@@ -187,15 +187,16 @@ jobs:
             exit 0;
           fi
 
-          # Check if JUnit file exists
-          if [ ! -f "test-results/junit.xml" ]; then
-            echo "⚠️  JUnit XML not found at test-results/junit.xml - skipping Xray upload";
+          # Use custom Xray-optimized JUnit XML with test keys in classname
+          JUNIT_FILE="test-results/junit-xray.xml"
+          if [ ! -f "$JUNIT_FILE" ]; then
+            echo "⚠️  Xray JUnit XML not found at $JUNIT_FILE - skipping Xray upload";
             exit 0;
           fi
 
-          echo "📄 JUnit file found: $(wc -l < test-results/junit.xml) lines"
-          echo "📋 First few lines of JUnit XML:"
-          head -n 5 test-results/junit.xml
+          echo "📄 Xray JUnit file found: $(wc -l < $JUNIT_FILE) lines"
+          echo "📋 First few lines of Xray JUnit XML:"
+          head -n 5 "$JUNIT_FILE"
 
           echo "Authenticating to Xray Cloud..."
           TOKEN=$(curl -s -H "Content-Type: application/json" \
@@ -210,7 +211,7 @@ jobs:
 
           echo "Uploading JUnit results to Xray for project $XRAY_PROJECT_KEY..."
           # Extract total test count from root element; skip upload if zero (Xray returns 400 otherwise)
-          TEST_COUNT=$(grep -o 'tests="[0-9]*"' test-results/junit.xml | head -n1 | sed -E 's/tests="([0-9]+)"/\1/') || TEST_COUNT=0
+          TEST_COUNT=$(grep -o 'tests="[0-9]*"' "$JUNIT_FILE" | head -n1 | sed -E 's/tests="([0-9]+)"/\1/') || TEST_COUNT=0
           echo "Detected test count: $TEST_COUNT"
           if [ "${TEST_COUNT}" = "0" ]; then
             echo "⚠️  No testcases in JUnit XML - skipping Xray upload to avoid 400 error";
@@ -220,7 +221,7 @@ jobs:
           # Primary attempt: multipart/form-data as per Xray docs
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer $TOKEN" \
-            -F "file=@test-results/junit.xml" \
+            -F "file=@${JUNIT_FILE}" \
             "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=$XRAY_PROJECT_KEY")
 
           STATUS=$(echo "$RESPONSE" | tail -n1)
@@ -231,7 +232,7 @@ jobs:
             RESPONSE=$(curl -s -w "\n%{http_code}" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: text/xml" \
-              --data-binary @test-results/junit.xml \
+              --data-binary "@${JUNIT_FILE}" \
               "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=$XRAY_PROJECT_KEY")
             STATUS=$(echo "$RESPONSE" | tail -n1)
             BODY=$(echo "$RESPONSE" | sed '$d')
@@ -248,6 +249,11 @@ jobs:
             exit 1;
           else
             echo "✅ Xray upload successful (status $STATUS)";
+            # Extract and display Test Execution key for easy reference
+            EXEC_KEY=$(echo "$BODY" | grep -o '"key":"[^"]*"' | head -n1 | sed 's/"key":"\([^"]*\)"/\1/')
+            if [ -n "$EXEC_KEY" ]; then
+              echo "📊 Test Execution created: $EXEC_KEY";
+            fi
           fi
 
       - name: Upload test traces

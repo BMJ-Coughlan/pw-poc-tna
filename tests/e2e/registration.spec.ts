@@ -15,10 +15,11 @@ import {
  */
 
 test.describe('Registration Flow - E2E @e2e', () => {
-  test('should register a new user successfully and navigate to login or app @smoke', async ({
+  test('[XSP-54] should register a new user successfully and navigate to login or app @smoke', async ({
     page,
   }, testInfo) => {
-    // Map to Xray test case XSP-54
+    // Xray test key embedded in test name for reliable mapping
+    // Property-based mapping requires Xray project config: "Use properties for test key mapping"
     testInfo.annotations.push({ type: 'xray', description: 'XSP-54' });
 
     const registrationPage = new RegistrationPage(page);

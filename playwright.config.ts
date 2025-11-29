@@ -30,6 +30,7 @@ export default defineConfig({
         ['github'],
         ['html', { open: 'never' }],
         ['junit', { outputFile: 'test-results/junit.xml' }],
+        ['./lib/reporters/xrayJunitReporter.ts'], // Custom reporter for Xray test key mapping
         ['list'],
       ]
     : [['html', { open: 'always' }], ['list']],
