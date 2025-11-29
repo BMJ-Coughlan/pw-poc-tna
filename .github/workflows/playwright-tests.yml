@@ -177,9 +177,9 @@ jobs:
         if: always()
         shell: bash
         env:
-          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
-          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
-          XRAY_PROJECT_KEY: ${{ secrets.XRAY_PROJECT_KEY }}
+          XRAY_CLIENT_ID: ${{ secrets.X_RAY_CLIENT_ID }}
+          XRAY_CLIENT_SECRET: ${{ secrets.X_RAY_CLIENT_SECRET }}
+          XRAY_PROJECT_KEY: ${{ secrets.X_RAY_PROJECT_KEY }}
         run: |
           set -euo pipefail
           if [ -z "${XRAY_CLIENT_ID:-}" ] || [ -z "${XRAY_CLIENT_SECRET:-}" ] || [ -z "${XRAY_PROJECT_KEY:-}" ]; then
