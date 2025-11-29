@@ -9,6 +9,9 @@ import { test, expect } from '../../lib/fixtures/testBase';
  * test state and the UI validates the result.
  */
 
+// Xray mapping: If using named tests, Xray can map results via the test name.
+// Alternatively, annotate with keys like: test.info().annotations.push({ type: 'xray', description: 'XSP-54' })
+// For simplicity, ensure the test name matches the Xray test case title or include the key in the name.
 test.describe('Authentication Smoke Tests', () => {
   test('should complete full registration and login flow with UI navigation', async ({
     userProfile,
