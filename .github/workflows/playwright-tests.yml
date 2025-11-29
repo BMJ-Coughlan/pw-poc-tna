@@ -209,13 +209,33 @@ jobs:
           echo "✅ Authenticated successfully"
 
           echo "Uploading JUnit results to Xray for project $XRAY_PROJECT_KEY..."
-          # Xray JUnit import expects the raw XML in the request body (text/xml)
-          # Use --data-binary to avoid newline/encoding issues and send exact file contents
+          # Extract total test count from root element; skip upload if zero (Xray returns 400 otherwise)
+          TEST_COUNT=$(grep -o 'tests="[0-9]*"' test-results/junit.xml | head -n1 | sed -E 's/tests="([0-9]+)"/\1/') || TEST_COUNT=0
+          echo "Detected test count: $TEST_COUNT"
+          if [ "${TEST_COUNT}" = "0" ]; then
+            echo "⚠️  No testcases in JUnit XML - skipping Xray upload to avoid 400 error";
+            exit 0;
+          fi
+
+          # Primary attempt: multipart/form-data as per Xray docs
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: text/xml" \
-            --data-binary @test-results/junit.xml \
+            -F "file=@test-results/junit.xml" \
             "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=$XRAY_PROJECT_KEY")
+
+          STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$STATUS" = "400" ]; then
+            echo "🔁 Multipart upload returned 400; retrying with raw text/xml body (fallback)";
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: text/xml" \
+              --data-binary @test-results/junit.xml \
+              "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=$XRAY_PROJECT_KEY")
+            STATUS=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+          fi
 
           STATUS=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
