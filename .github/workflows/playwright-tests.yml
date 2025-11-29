@@ -187,16 +187,20 @@ jobs:
             exit 0;
           fi
 
-          # Use custom Xray-optimized JUnit XML with test keys in classname
-          JUNIT_FILE="test-results/junit-xray.xml"
-          if [ ! -f "$JUNIT_FILE" ]; then
-            echo "⚠️  Xray JUnit XML not found at $JUNIT_FILE - skipping Xray upload";
+          # Check if standard JUnit file exists
+          if [ ! -f "test-results/junit.xml" ]; then
+            echo "⚠️  JUnit XML not found at test-results/junit.xml - skipping Xray upload";
             exit 0;
           fi
 
-          echo "📄 Xray JUnit file found: $(wc -l < $JUNIT_FILE) lines"
-          echo "📋 First few lines of Xray JUnit XML:"
-          head -n 5 "$JUNIT_FILE"
+          echo "📄 JUnit file found: $(wc -l < test-results/junit.xml) lines"
+          
+          # Transform JUnit XML to add Xray test keys to classname
+          # Extract xray property values and prepend to classname attribute
+          cat test-results/junit.xml | sed -E 's/(<testcase[^>]*classname=")([^"]*)"([^>]*>)\s*<properties>\s*<property name="xray" value="([^"]*)">/\1\4::\2"\3<properties><property name="xray" value="\4">/g' > test-results/junit-xray.xml
+          
+          echo "📋 Transformed JUnit XML (first 10 lines):"
+          head -n 10 test-results/junit-xray.xml
 
           echo "Authenticating to Xray Cloud..."
           TOKEN=$(curl -s -H "Content-Type: application/json" \
@@ -211,7 +215,7 @@ jobs:
 
           echo "Uploading JUnit results to Xray for project $XRAY_PROJECT_KEY..."
           # Extract total test count from root element; skip upload if zero (Xray returns 400 otherwise)
-          TEST_COUNT=$(grep -o 'tests="[0-9]*"' "$JUNIT_FILE" | head -n1 | sed -E 's/tests="([0-9]+)"/\1/') || TEST_COUNT=0
+          TEST_COUNT=$(grep -o 'tests="[0-9]*"' test-results/junit-xray.xml | head -n1 | sed -E 's/tests="([0-9]+)"/\1/') || TEST_COUNT=0
           echo "Detected test count: $TEST_COUNT"
           if [ "${TEST_COUNT}" = "0" ]; then
             echo "⚠️  No testcases in JUnit XML - skipping Xray upload to avoid 400 error";
@@ -221,7 +225,7 @@ jobs:
           # Primary attempt: multipart/form-data as per Xray docs
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer $TOKEN" \
-            -F "file=@${JUNIT_FILE}" \
+            -F "file=@test-results/junit-xray.xml" \
             "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=$XRAY_PROJECT_KEY")
 
           STATUS=$(echo "$RESPONSE" | tail -n1)
@@ -232,7 +236,7 @@ jobs:
             RESPONSE=$(curl -s -w "\n%{http_code}" \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: text/xml" \
-              --data-binary "@${JUNIT_FILE}" \
+              --data-binary @test-results/junit-xray.xml \
               "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=$XRAY_PROJECT_KEY")
             STATUS=$(echo "$RESPONSE" | tail -n1)
             BODY=$(echo "$RESPONSE" | sed '$d')
